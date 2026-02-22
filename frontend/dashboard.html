@@ -1,0 +1,300 @@
+<html>
+    <head>
+        <title>Eco Rewards Dashboard</title>
+        <style>
+            body
+            {
+                font-family:sans-serif;
+                display:flex;
+                flex-direction:column;
+                background-color:white;
+                align-items:center;
+                margin:auto;
+                padding:20px;
+                background-image: url('assets/bg.jpg');
+                background-size: cover;  
+                background-position: center; 
+                background-repeat: no-repeat; 
+            }
+            .header
+            {
+                width: 100%;
+                background-color: #4CAF50;
+                padding: 15px;
+                text-align: center;
+                color: white;
+                font-size: 24px;
+            }
+            .container 
+            {
+                background: #ffffff;
+                padding: 20px;
+                border-radius: 15px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                text-align: center;
+                width: 90%;
+                max-width: 600px;
+                margin-top: 20px;
+            }
+            .points
+            {
+                font-size: 32px;
+                color: #4CAF50;
+                font-weight: bold;
+            }
+            .progress-container 
+            {
+                width: 100%;
+                background-color: #ddd;
+                border-radius: 10px;
+                margin: 15px 0;
+            }
+            .progress-bar 
+            {
+                width: 0%;
+                height: 20px;
+                background-color: #4CAF50;
+                border-radius: 10px;
+                transition: width 0.5s ease-in-out;
+            }
+            .btn 
+            {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                width: 100%;
+                align-items: center;
+                width: fit-content;
+
+            }
+
+            .btn:hover 
+            {
+                background-color: #45a049;
+            }
+            .activity-list 
+            {
+                text-align: left;
+                margin-top: 10px;
+            }
+
+            .popup-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 1000;
+                justify-content: center;
+                align-items: center;
+            }
+            .popup-content {
+                background: white;
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+                max-width: 400px;
+                width: 90%;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            }
+            .popup-buttons {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 20px;
+            }
+            .popup-btn {
+                flex: 1;
+                margin: 0 10px;
+                padding: 10px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            .popup-btn-cancel {
+                background-color: #ddd;
+                color: black;
+            }
+            .popup-btn-confirm {
+                background-color: #f44336;
+                color: white;
+            }
+            .reward-card { 
+                border: 2px solid rgb(25, 199, 25); 
+                padding: 15px; border-radius: 10px; 
+                width: 300px; 
+                margin: 20px auto; 
+                background-color: white; 
+            }
+            .coupon { 
+                font-weight: bold; 
+                color: rgba(17, 17, 207, 0.715); 
+                cursor: pointer; 
+            }
+
+            .card 
+        {
+            background-color: rgb(243, 241, 241);
+            color: rgb(0, 0, 0);
+            border: 5px solid rgb(24, 237, 173);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: 0.3s;
+            width: fit-content;
+            max-width: 400px;
+            align-items: center;
+            
+        }
+        </style>
+    </head>
+    <body>
+        <div class="header">EcoRewards Dashboard</div>
+
+        <div class="container">
+            <h2>Welcome!</h2>
+            <p>You have earned:</p>
+            <div class="points" id="totalPoints">0 Points</div>
+    
+            <p>Progress towards next reward:</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+    
+            <h3>Recent Activities</h3>
+            <div class="activity-list" id="activityList">
+                <p>No recent activities</p>
+            </div>
+            <button class="btn" onclick="showResetConfirmation()">Clear Data</button>
+        </div>
+
+        <div id="resetPopup" class="popup-overlay">
+            <div class="popup-content">
+                <h3>Confirm Reset</h3>
+                <p>Are you sure you want to clear all data? This action cannot be undone.</p>
+                <div class="popup-buttons">
+                    <button class="popup-btn popup-btn-cancel" onclick="hideResetConfirmation()">Cancel</button>
+                    <button class="popup-btn popup-btn-confirm" onclick="clearData()">Reset</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div id="rewards-container"></div>
+    <p id="no-rewards" style="display: none; color: rgb(250, 117, 7);"></p>
+
+    <div class="card">
+        <a href="index.html" class="btn">BACK</a>
+    </div>
+           
+        <script>
+            const token = localStorage.getItem('token');
+            if (!token) window.location.href = 'login.html';
+
+            // Helper: make authenticated API calls
+            async function apiCall(url, options = {}) {
+            const res = await fetch(url, {
+                ...options,
+                headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                ...(options.headers || {})
+                }
+            });
+            if (res.status === 401 || res.status === 403) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+            return res.json();
+            }
+            function loadPoints() 
+            {
+                let points = localStorage.getItem("ecoPoints") || 0;
+                document.getElementById("totalPoints").innerText = points + " Points";
+    
+                let progress = Math.min((points / 1000)*100, 100); 
+                document.getElementById("progressBar").style.width = progress + "%";
+    
+                let activities = JSON.parse(localStorage.getItem("ecoActivities")) || [];
+                let activityList = document.getElementById("activityList");
+                activityList.innerHTML = activities.length > 0 
+                    ? activities.map(act => `✔ ${act}`).join("<br>")
+                    : "<p>No recent activities</p>";
+            }
+
+            function showResetConfirmation() {
+                document.getElementById("resetPopup").style.display = "flex";
+            }
+
+            function hideResetConfirmation() {
+                document.getElementById("resetPopup").style.display = "none";
+            }
+        
+            function clearData() 
+            {
+                localStorage.removeItem("ecoPoints");
+                localStorage.removeItem("ecoActivities");
+                loadPoints(); 
+                hideResetConfirmation();
+            }
+    
+            window.onload = function () 
+            {
+                loadPoints();  
+                displayRewards();  
+            };
+
+            function copyCode(code) {
+        navigator.clipboard.writeText(code);
+        alert("Coupon code copied to clipboard!");
+    }
+
+    function displayRewards() {
+        let totalPoints = parseFloat(localStorage.getItem("ecoPoints")) || 0;
+        let rewardsContainer = document.getElementById("rewards-container");
+        let noRewardsMessage = document.getElementById("no-rewards");
+        rewardsContainer.innerHTML = ""; 
+
+        let rewards = [
+            { threshold: 100, title: "10% Off at EcoMart", code: "ECOMART10" },
+            { threshold: 200, title: "Free Coffee at GreenCafe", code: "FREECOFFEE" },
+            { threshold: 300, title: "20% Off on EcoClothes", code: "ECOCLOTH20" },
+            { threshold: 400, title: "Free Meal at VeganBite", code: "VEGANMEAL" },
+
+    
+        ];
+
+        let hasRewards = false;
+
+        rewards.forEach(reward => {
+            if (totalPoints >= reward.threshold) {
+                hasRewards = true;
+                let rewardDiv = document.createElement("div");
+                rewardDiv.classList.add("reward-card");
+                rewardDiv.innerHTML = `
+                    <h3>Reward: ${reward.title}</h3>
+                    <p>Coupon Code: <span class="coupon" onclick="copyCode('${reward.code}')">${reward.code}</span></p>
+                `;
+                rewardsContainer.appendChild(rewardDiv);
+            }
+        });
+
+        noRewardsMessage.style.display = hasRewards ? "none" : "block";
+    }
+
+        </script>
+        <style>
+            body {
+                background-image: url('assets/bg.jpg'); 
+                background-size: cover;  
+                background-position: center; 
+                background-repeat: no-repeat; 
+              }
+        </style>          
+    </body>
+</html>
