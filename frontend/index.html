@@ -1,241 +1,287 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Eco Rewards</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoRewards - Log Your Trip</title>
     <style>
-        body 
-        {
-            font-family: Arial, Helvetica, sans-serif;
-            text-align: center;
-            background-color: whitesmoke;
-            margin: 10px;
-            padding: 10px;
-            background-position: center;
-            background-image: url("assets/background.jpg");
-            background-size: cover;
-            background-repeat: no-repeat;
-        }
-        h1
-        {
-            margin-top: 20px;
-            text-size-adjust: 30px;
-            text-decoration: underline wavy green;
-        }
-        .card 
-        {
-            background-color: rgb(243, 241, 241);
-            color: rgb(0, 0, 0);
-            border: 5px solid rgb(24, 237, 173);
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px auto;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            transition: 0.3s;
-            width: 50%;
-            max-width: 400px;
-            align-items: center;
-        }
-        .container 
-        {
-            background-color: rgb(243, 241, 241);
-            color: rgb(0, 0, 0);
-            border: 5px solid rgb(24, 237, 173);
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            margin: 20px auto;
-            width: 90%;
-            max-width: 400px;
-        }
-        .btn 
-        {
-            background-color: rgb(24, 237, 173);
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
-            margin-top: 10px;
-            border-radius: 5px;
-            font-size: 20px;
-        }
-        .btn:hover 
-        {
-            background-color: rgb(115, 241, 163);
-        }   
-        input[type=text], select 
-        {
-            width: 100%;
-            padding: 12px 20px;
-            margin: 8px 0;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         
-        .popup-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
             justify-content: center;
             align-items: center;
-        }
-        .popup-content {
-            background: white;
             padding: 20px;
-            border-radius: 10px;
+            background-image: url('assets/bg.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             text-align: center;
-            max-width: 400px;
-            width: 90%;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
-        .popup-buttons {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2ecc71;
+            margin-bottom: 10px;
         }
-        .popup-btn {
-            flex: 1;
-            margin: 0 10px;
-            padding: 10px;
+
+        .logo span { color: #27ae60; }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2ecc71;
+        }
+
+        .btn {
+            background: #2ecc71;
+            color: white;
             border: none;
-            border-radius: 5px;
+            padding: 14px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
             cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: background 0.3s;
         }
-        .popup-btn-cancel {
-            background-color: #ddd;
-            color: black;
+
+        .btn:hover { background: #27ae60; }
+        .btn:disabled { background: #95a5a6; cursor: not-allowed; }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0fdf4;
+            border-radius: 10px;
+            border: 2px solid #2ecc71;
+            display: none;
         }
-        .popup-btn-confirm {
-            background-color: #f44336;
+
+        .result.show { display: block; }
+
+        .result h3 {
+            color: #2ecc71;
+            margin-bottom: 10px;
+        }
+
+        .result p {
+            color: #2c3e50;
+            margin: 5px 0;
+        }
+
+        .nav-links {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #2ecc71;
+            font-weight: 600;
+            padding: 10px 20px;
+            border: 2px solid #2ecc71;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: #2ecc71;
             color: white;
         }
+
+        .error-msg {
+            color: #e74c3c;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .error-msg.show { display: block; }
+
+        .success-msg {
+            color: #2ecc71;
+            margin-top: 10px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .success-msg.show { display: block; }
     </style>
 </head>
 <body>
-
-    <h1>EcoRewards</h1>
-    
-    <div class="card">
-        <h3>Click to view your activities</h3>
-        <a href="dashboard.html" class="btn">View my dashboard</a>
-    </div>
-
     <div class="container">
-        <p>Track your EcoRewards</p>
-        <input type="text" id="distance" placeholder="Enter distance in km">
-        <select id="mode">
-            <option value="walk">Walking</option>
-            <option value="run">Running</option>    
-            <option value="cycle">Cycling</option>
-            <option value="ev">Electric Vehicles</option>
-            <option value="bus">Bus</option>
-            <option value="metro">Metro</option>
-        </select>
-        <button class="btn" onclick="calculatePoints()">Calculate Points</button>
-        <p id="points"></p>
-    </div>
+        <div class="logo">🌿 Eco<span>Rewards</span></div>
+        <p class="subtitle">Track your EcoRewards</p>
 
-    <div class="container">
-        <p>Weekly Progress</p>
-        <p>Total Distance: <span id="weeklyDistance">0</span> km</p>
-        <button class="btn" onclick="showResetConfirmation()">Clear Data</button>
-    </div>
-
-    <div id="resetPopup" class="popup-overlay">
-        <div class="popup-content">
-            <h3>Confirm Reset</h3>
-            <p>Are you sure you want to clear all data? This action cannot be undone.</p>
-            <div class="popup-buttons">
-                <button class="popup-btn popup-btn-cancel" onclick="hideResetConfirmation()">Cancel</button>
-                <button class="popup-btn popup-btn-confirm" onclick="clearData()">Reset</button>
+        <form id="tripForm">
+            <div class="form-group">
+                <label for="distance">Distance (km)</label>
+                <input type="number" id="distance" min="0.1" max="500" step="0.1" placeholder="e.g., 12" required>
             </div>
+
+            <div class="form-group">
+                <label for="mode">Transport Mode</label>
+                <select id="mode" required>
+                    <option value="">Select mode...</option>
+                    <option value="walk">🚶 Walk</option>
+                    <option value="run">🏃 Run</option>
+                    <option value="cycle">🚴 Cycle</option>
+                    <option value="bus">🚌 Bus</option>
+                    <option value="metro">🚇 Metro</option>
+                    <option value="ev">🚗 Electric Vehicle</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">📍 Log Trip</button>
+            <p class="error-msg" id="errorMsg"></p>
+            <p class="success-msg" id="successMsg"></p>
+        </form>
+
+        <div class="result" id="result">
+            <h3>✅ Trip Logged Successfully!</h3>
+            <p><strong>Points Earned:</strong> <span id="pointsEarned">0</span></p>
+            <p><strong>CO₂ Saved:</strong> <span id="co2Saved">0</span> kg</p>
+            <p><strong>Distance:</strong> <span id="distanceLogged">0</span> km</p>
+        </div>
+
+        <div class="nav-links">
+            <a href="dashboard.html">📊 View Dashboard</a>
+            <a href="leaderboard.html">🏆 Leaderboard</a>
+            <a href="login.html" onclick="logout()">🚪 Logout</a>
         </div>
     </div>
 
     <script>
-        const token = localStorage.getItem('token');
-        if (!token) window.location.href = 'login.html';
+    // ── CONFIG ──
+    const API = 'http://localhost:3000/api';
+    const token = localStorage.getItem('token');
 
-        // Helper: make authenticated API calls
-        async function apiCall(url, options = {}) {
-        const res = await fetch(url, {
-            ...options,
-            headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            ...(options.headers || {})
+    // Auth guard
+    if (!token) {
+        window.location.href = 'login.html';
+    }
+
+    // ── LOGOUT ──
+    function logout() {
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
+
+    // ── FORM SUBMIT ──
+    document.getElementById('tripForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const distance = document.getElementById('distance').value;
+        const mode = document.getElementById('mode').value;
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMsg = document.getElementById('errorMsg');
+        const successMsg = document.getElementById('successMsg');
+        const result = document.getElementById('result');
+
+        // Reset messages
+        errorMsg.classList.remove('show');
+        successMsg.classList.remove('show');
+        result.classList.remove('show');
+
+        // Validate
+        if (!distance || !mode) {
+            errorMsg.textContent = 'Please fill in all fields';
+            errorMsg.classList.add('show');
+            return;
+        }
+
+        // Disable button during submission
+        submitBtn.disabled = true;
+        submitBtn.textContent = '⏳ Logging...';
+
+        try {
+            // ── ACTUALLY SEND DATA TO BACKEND ──
+            const response = await fetch(`${API}/points/add`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ distance, mode })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to log trip');
             }
-        });
-        if (res.status === 401 || res.status === 403) {
-            localStorage.clear();
-            window.location.href = 'login.html';
+
+            // Show success
+            successMsg.textContent = data.streakMessage || 'Trip logged successfully!';
+            successMsg.classList.add('show');
+
+            // Show result details
+            document.getElementById('pointsEarned').textContent = data.points;
+            document.getElementById('co2Saved').textContent = data.co2_saved.toFixed(2);
+            document.getElementById('distanceLogged').textContent = data.distance;
+            result.classList.add('show');
+
+            // Reset form
+            document.getElementById('tripForm').reset();
+
+            // Auto-redirect to dashboard after 2 seconds
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 2000);
+
+        } catch (err) {
+            console.error('Error logging trip:', err);
+            errorMsg.textContent = err.message || 'Failed to log trip. Please try again.';
+            errorMsg.classList.add('show');
+        } finally {
+            // Re-enable button
+            submitBtn.disabled = false;
+            submitBtn.textContent = '📍 Log Trip';
         }
-        return res.json();
-        }
-    function calculatePoints() 
-        {
-        const distance = parseFloat(document.getElementById("distance").value);
-        const mode = document.getElementById("mode").value;
-        let points = 0;
-
-        if (mode === "walk") points = distance * 25;
-        if (mode === "run") points = distance * 20;
-        if (mode === "cycle") points = distance * 35;
-        if (mode === "bus") points = distance * 30;
-        if (mode === "ev") points = distance * 50;
-        if (mode === "metro") points = distance * 45;
-
-        let totalPoints = parseFloat(localStorage.getItem("ecoPoints")) || 0;
-        totalPoints += points;
-        localStorage.setItem("ecoPoints", totalPoints);
-
-        let totalDistance = parseFloat(localStorage.getItem("totalDistance")) || 0;
-        totalDistance += distance;
-        localStorage.setItem("totalDistance", totalDistance);
-
-        document.getElementById("points").innerText = `You've earned ${points} points!`;
-
-        updateWeeklyProgress();
-        let activities = JSON.parse(localStorage.getItem("ecoActivities")) || [];
-        activities.push(`${distance} km by ${mode}`);
-        localStorage.setItem("ecoActivities", JSON.stringify(activities));
-    }
-
-    function updateWeeklyProgress()
-    {
-        let totalDistance = parseFloat(localStorage.getItem("totalDistance")) || 0;
-        document.getElementById("weeklyDistance").innerText = totalDistance.toFixed(1);
-    }
-
-    function showResetConfirmation() 
-        {
-            document.getElementById("resetPopup").style.display = "flex";
-        }
-
-    function hideResetConfirmation() 
-        {
-            document.getElementById("resetPopup").style.display = "none";
-        }
-    
-    function clearData() 
-        {
-            localStorage.removeItem("totalDistance");
-            localStorage.removeItem("ecoPoints");
-            localStorage.removeItem("ecoActivities");
-            updateWeeklyProgress();
-            hideResetConfirmation();
-        }
-
-    window.onload = function ()
-    {
-        updateWeeklyProgress();
-    };
-
+    });
     </script>
-
 </body>
 </html>

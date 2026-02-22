@@ -9,6 +9,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ── DEFAULT ROUTE: Must come BEFORE express.static ──
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/login.html'));
+});
+
 // Serve your HTML files from the frontend folder
 app.use(express.static(path.join(__dirname, '../frontend')));
 

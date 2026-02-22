@@ -1,300 +1,697 @@
+<!DOCTYPE html>
 <html>
-    <head>
-        <title>Eco Rewards Dashboard</title>
-        <style>
-            body
-            {
-                font-family:sans-serif;
-                display:flex;
-                flex-direction:column;
-                background-color:white;
-                align-items:center;
-                margin:auto;
-                padding:20px;
-                background-image: url('assets/bg.jpg');
-                background-size: cover;  
-                background-position: center; 
-                background-repeat: no-repeat; 
-            }
-            .header
-            {
-                width: 100%;
-                background-color: #4CAF50;
-                padding: 15px;
-                text-align: center;
-                color: white;
-                font-size: 24px;
-            }
-            .container 
-            {
-                background: #ffffff;
-                padding: 20px;
-                border-radius: 15px;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                text-align: center;
-                width: 90%;
-                max-width: 600px;
-                margin-top: 20px;
-            }
-            .points
-            {
-                font-size: 32px;
-                color: #4CAF50;
-                font-weight: bold;
-            }
-            .progress-container 
-            {
-                width: 100%;
-                background-color: #ddd;
-                border-radius: 10px;
-                margin: 15px 0;
-            }
-            .progress-bar 
-            {
-                width: 0%;
-                height: 20px;
-                background-color: #4CAF50;
-                border-radius: 10px;
-                transition: width 0.5s ease-in-out;
-            }
-            .btn 
-            {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 5px;
-                cursor: pointer;
-                width: 100%;
-                align-items: center;
-                width: fit-content;
+<head>
+    <title>Eco Rewards Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-            }
-
-            .btn:hover 
-            {
-                background-color: #45a049;
-            }
-            .activity-list 
-            {
-                text-align: left;
-                margin-top: 10px;
-            }
-
-            .popup-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                z-index: 1000;
-                justify-content: center;
-                align-items: center;
-            }
-            .popup-content {
-                background: white;
-                padding: 20px;
-                border-radius: 10px;
-                text-align: center;
-                max-width: 400px;
-                width: 90%;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            }
-            .popup-buttons {
-                display: flex;
-                justify-content: space-between;
-                margin-top: 20px;
-            }
-            .popup-btn {
-                flex: 1;
-                margin: 0 10px;
-                padding: 10px;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-            .popup-btn-cancel {
-                background-color: #ddd;
-                color: black;
-            }
-            .popup-btn-confirm {
-                background-color: #f44336;
-                color: white;
-            }
-            .reward-card { 
-                border: 2px solid rgb(25, 199, 25); 
-                padding: 15px; border-radius: 10px; 
-                width: 300px; 
-                margin: 20px auto; 
-                background-color: white; 
-            }
-            .coupon { 
-                font-weight: bold; 
-                color: rgba(17, 17, 207, 0.715); 
-                cursor: pointer; 
-            }
-
-            .card 
-        {
-            background-color: rgb(243, 241, 241);
-            color: rgb(0, 0, 0);
-            border: 5px solid rgb(24, 237, 173);
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px auto;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            transition: 0.3s;
-            width: fit-content;
-            max-width: 400px;
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
             align-items: center;
-            
+            padding: 0 0 40px 0;
+            background-image: url('assets/bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 100vh;
         }
-        </style>
-    </head>
-    <body>
-        <div class="header">EcoRewards Dashboard</div>
 
-        <div class="container">
-            <h2>Welcome!</h2>
-            <p>You have earned:</p>
-            <div class="points" id="totalPoints">0 Points</div>
-    
-            <p>Progress towards next reward:</p>
-            <div class="progress-container">
-                <div class="progress-bar" id="progressBar"></div>
+        /* ── HEADER ── */
+        .header {
+            width: 100%;
+            background-color: #4CAF50;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .header-title {
+            color: white;
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .header-user {
+            color: rgba(255,255,255,0.9);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .header-user span {
+            font-weight: 700;
+            color: white;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 7px 16px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.35);
+            border-color: white;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            text-decoration: none;
+            padding: 7px 14px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .nav-link.active {
+            background: white;
+            color: #4CAF50;
+        }
+
+        /* ── CONTAINERS ── */
+        .container {
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+            margin-top: 20px;
+        }
+
+        .container h2, .container h3 {
+            margin-bottom: 12px;
+            color: #1a1a1a;
+        }
+
+        /* ── POINTS ── */
+        .points {
+            font-size: 2.5rem;
+            color: #4CAF50;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+
+        /* ── STREAK BADGE ── */
+        .streak-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 999px;
+            padding: 8px 18px;
+            font-weight: bold;
+            color: #ea580c;
+            margin: 10px 0;
+            font-size: 0.95rem;
+        }
+
+        /* ── PROGRESS BAR ── */
+        .progress-container {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 10px;
+            margin: 12px 0;
+            height: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #4CAF50;
+            border-radius: 10px;
+            transition: width 0.6s ease;
+        }
+
+        .progress-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+
+        /* ── ACTIVITY LIST ── */
+        .activity-list {
+            text-align: left;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .activity-item:last-child { border-bottom: none; }
+
+        .activity-co2 {
+            color: #16a34a;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        /* ── IMPACT GRID ── */
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .impact-stat {
+            background: #f0fdf4;
+            border-radius: 12px;
+            padding: 14px 10px;
+            text-align: center;
+            border: 1px solid #bbf7d0;
+        }
+
+        .impact-num {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #16a34a;
+        }
+
+        .impact-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        /* ── BUTTONS ── */
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover { background-color: #45a049; }
+
+        .btn-danger {
+            background-color: #ef4444;
+        }
+
+        .btn-danger:hover { background-color: #dc2626; }
+
+        /* ── POPUP ── */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup-content {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 380px;
+            width: 90%;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        .popup-content h3 { margin-bottom: 10px; }
+        .popup-content p  { color: #64748b; margin-bottom: 20px; }
+
+        .popup-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .popup-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .popup-btn-cancel  { background: #e2e8f0; color: #1a1a1a; }
+        .popup-btn-confirm { background: #ef4444; color: white; }
+
+        /* ── BADGE POPUP ── */
+        .badge-toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #16a34a, #4CAF50);
+            color: white;
+            padding: 16px 22px;
+            border-radius: 14px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            font-weight: 600;
+            font-size: 1rem;
+            z-index: 9999;
+            transform: translateX(120%);
+            transition: transform 0.4s ease;
+            max-width: 280px;
+        }
+
+        .badge-toast.show { transform: translateX(0); }
+        .badge-toast .badge-emoji { font-size: 2rem; display: block; margin-bottom: 6px; }
+
+        /* ── REWARDS ── */
+        .reward-card {
+            border: 2px solid rgb(25,199,25);
+            padding: 14px;
+            border-radius: 10px;
+            margin: 12px auto;
+            background-color: #f0fdf4;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .coupon {
+            font-weight: bold;
+            color: #1d4ed8;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 1rem;
+            background: #eff6ff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px dashed #93c5fd;
+        }
+
+        .coupon:hover { background: #dbeafe; }
+
+        /* ── BACK CARD ── */
+        .card {
+            background-color: rgba(243,241,241,0.95);
+            border: 3px solid rgb(24,237,173);
+            border-radius: 10px;
+            padding: 16px 24px;
+            margin: 20px auto;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media(max-width: 480px) {
+            .impact-grid { grid-template-columns: 1fr; }
+            .points { font-size: 2rem; }
+            .header-title { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── HEADER WITH USERNAME + LOGOUT ── -->
+    <div class="header">
+        <div class="header-title">🌿 EcoRewards Dashboard</div>
+        <div class="header-right">
+            <div class="nav-links">
+                <a href="index.html"       class="nav-link">🏠 Home</a>
+                <a href="leaderboard.html" class="nav-link">🏆 Leaderboard</a>
             </div>
-    
-            <h3>Recent Activities</h3>
-            <div class="activity-list" id="activityList">
-                <p>No recent activities</p>
-            </div>
-            <button class="btn" onclick="showResetConfirmation()">Clear Data</button>
+            <div class="header-user">👤 Hello, <span id="headerUsername">...</span></div>
+            <button class="logout-btn" onclick="logout()">Logout →</button>
         </div>
-
-        <div id="resetPopup" class="popup-overlay">
-            <div class="popup-content">
-                <h3>Confirm Reset</h3>
-                <p>Are you sure you want to clear all data? This action cannot be undone.</p>
-                <div class="popup-buttons">
-                    <button class="popup-btn popup-btn-cancel" onclick="hideResetConfirmation()">Cancel</button>
-                    <button class="popup-btn popup-btn-confirm" onclick="clearData()">Reset</button>
-                </div>
-            </div>
-        </div>
-
     </div>
-    <div id="rewards-container"></div>
-    <p id="no-rewards" style="display: none; color: rgb(250, 117, 7);"></p>
 
+    <!-- ── POINTS + PROGRESS ── -->
+    <div class="container">
+        <h2>Welcome, <span id="welcomeName" style="color:#4CAF50"></span>!</h2>
+        <p>You have earned:</p>
+        <div class="points" id="totalPoints">0 Points</div>
+
+        <div id="streakBadge" class="streak-badge">🔥 0-day streak</div>
+
+        <p class="progress-label">Progress towards next reward (1000 pts):</p>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <h3 style="margin-top:16px">Recent Activities</h3>
+        <div class="activity-list" id="activityList">
+            <p style="color:#94a3b8;text-align:center">Loading activities...</p>
+        </div>
+
+        <br>
+        <button class="btn btn-danger" onclick="showResetConfirmation()">Clear Data</button>
+    </div>
+
+    <!-- ── CO₂ IMPACT ── -->
+    <div class="container">
+        <h3>🌍 Your Environmental Impact</h3>
+        <div class="impact-grid">
+            <div class="impact-stat">
+                <div class="impact-num" id="totalCO2">0 kg</div>
+                <div class="impact-label">CO₂ Saved</div>
+            </div>
+            <div class="impact-stat">
+                <div class="impact-num" id="totalDistance">0 km</div>
+                <div class="impact-label">Total Distance</div>
+            </div>
+            <div class="impact-stat">
+                <div class="impact-num" id="treeDays">0</div>
+                <div class="impact-label">🌳 Tree-Days</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── WEEKLY CHART ── -->
+    <div class="container">
+        <h3>📊 Weekly Progress</h3>
+        <canvas id="weeklyChart" height="130"></canvas>
+    </div>
+
+    <!-- ── REWARDS ── -->
+    <div class="container">
+        <h3>🎁 Your Rewards</h3>
+        <div id="rewards-container"></div>
+        <p id="no-rewards" style="color:#94a3b8;display:none">
+            Earn more points to unlock rewards!
+        </p>
+    </div>
+
+    <!-- ── NAVIGATION ── -->
     <div class="card">
-        <a href="index.html" class="btn">BACK</a>
+        <a href="index.html"       class="btn">🏠 Log a Trip</a>
+        <a href="leaderboard.html" class="btn">🏆 Leaderboard</a>
     </div>
-           
-        <script>
-            const token = localStorage.getItem('token');
-            if (!token) window.location.href = 'login.html';
 
-            // Helper: make authenticated API calls
-            async function apiCall(url, options = {}) {
-            const res = await fetch(url, {
-                ...options,
-                headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-                ...(options.headers || {})
-                }
-            });
-            if (res.status === 401 || res.status === 403) {
-                localStorage.clear();
-                window.location.href = 'login.html';
-            }
-            return res.json();
-            }
-            function loadPoints() 
-            {
-                let points = localStorage.getItem("ecoPoints") || 0;
-                document.getElementById("totalPoints").innerText = points + " Points";
-    
-                let progress = Math.min((points / 1000)*100, 100); 
-                document.getElementById("progressBar").style.width = progress + "%";
-    
-                let activities = JSON.parse(localStorage.getItem("ecoActivities")) || [];
-                let activityList = document.getElementById("activityList");
-                activityList.innerHTML = activities.length > 0 
-                    ? activities.map(act => `✔ ${act}`).join("<br>")
-                    : "<p>No recent activities</p>";
-            }
+    <!-- ── RESET POPUP ── -->
+    <div id="resetPopup" class="popup-overlay">
+        <div class="popup-content">
+            <h3>Confirm Reset</h3>
+            <p>Are you sure you want to clear all your data? This cannot be undone.</p>
+            <div class="popup-buttons">
+                <button class="popup-btn popup-btn-cancel"  onclick="hideResetConfirmation()">Cancel</button>
+                <button class="popup-btn popup-btn-confirm" onclick="clearData()">Reset</button>
+            </div>
+        </div>
+    </div>
 
-            function showResetConfirmation() {
-                document.getElementById("resetPopup").style.display = "flex";
-            }
+    <!-- ── BADGE TOAST ── -->
+    <div class="badge-toast" id="badgeToast">
+        <span class="badge-emoji" id="badgeEmoji">🏅</span>
+        <div id="badgeName">Badge Earned!</div>
+        <div id="badgeDesc" style="font-size:0.8rem;opacity:0.85;margin-top:4px"></div>
+    </div>
 
-            function hideResetConfirmation() {
-                document.getElementById("resetPopup").style.display = "none";
-            }
-        
-            function clearData() 
-            {
-                localStorage.removeItem("ecoPoints");
-                localStorage.removeItem("ecoActivities");
-                loadPoints(); 
-                hideResetConfirmation();
-            }
-    
-            window.onload = function () 
-            {
-                loadPoints();  
-                displayRewards();  
-            };
+    <script>
+    // ── CONFIG ──
+    const API   = 'http://localhost:3000/api';
+    const token = localStorage.getItem('token');
+    const username = localStorage.getItem('username') || 'User';
 
-            function copyCode(code) {
-        navigator.clipboard.writeText(code);
-        alert("Coupon code copied to clipboard!");
+    // Auth guard
+    if (!token) window.location.href = 'login.html';
+
+    // Show username in header immediately
+    document.getElementById('headerUsername').textContent = username;
+    document.getElementById('welcomeName').textContent    = username;
+
+    let weeklyChart = null;
+
+    // ── API HELPER ──
+    async function apiCall(url) {
+        const res = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.status === 401 || res.status === 403) {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+        if (!res.ok) throw new Error(`API Error: ${res.status}`);
+        return res.json();
     }
 
-    function displayRewards() {
-        let totalPoints = parseFloat(localStorage.getItem("ecoPoints")) || 0;
-        let rewardsContainer = document.getElementById("rewards-container");
-        let noRewardsMessage = document.getElementById("no-rewards");
-        rewardsContainer.innerHTML = ""; 
+    // ── LOGOUT ──
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        window.location.href = 'login.html';
+    }
 
-        let rewards = [
-            { threshold: 100, title: "10% Off at EcoMart", code: "ECOMART10" },
-            { threshold: 200, title: "Free Coffee at GreenCafe", code: "FREECOFFEE" },
-            { threshold: 300, title: "20% Off on EcoClothes", code: "ECOCLOTH20" },
-            { threshold: 400, title: "Free Meal at VeganBite", code: "VEGANMEAL" },
+    // ── LOAD DASHBOARD (FIXED) ──
+    async function loadDashboard() {
+        try {
+            // 1. Load Main Data (Points, CO2, Activities, Streak)
+            // We removed the separate '/auth/profile' call to prevent crashes
+            const data = await apiCall(`${API}/points`);
+            
+            // 2. Load Weekly Chart Data (Optional - don't crash if this fails)
+            let weekly = [];
+            try {
+                weekly = await apiCall(`${API}/points/weekly`);
+            } catch (e) {
+                console.warn('Weekly chart data unavailable', e);
+            }
 
-    
+            // --- UPDATE UI ---
+
+            // Points + progress bar
+            const pts = data.points || 0;
+            document.getElementById('totalPoints').innerText = pts + ' Points';
+            document.getElementById('progressBar').style.width =
+                Math.min((pts / 1000) * 100, 100) + '%';
+
+            // Streak (Now comes from main data object)
+            if (data.current_streak !== undefined) {
+                document.getElementById('streakBadge').textContent =
+                    `🔥 ${data.current_streak}-day streak`;
+            }
+
+            // CO₂ impact stats
+            // Ensure we handle undefined values gracefully
+            const co2 = parseFloat(data.carbon_saved || 0);
+            const dist = parseFloat(data.total_distance || 0);
+            
+            document.getElementById('totalCO2').innerText = co2.toFixed(2) + ' kg';
+            document.getElementById('totalDistance').innerText = dist.toFixed(1) + ' km';
+            document.getElementById('treeDays').innerText =
+                Math.round((co2 / 21) * 365);
+
+            // Activity list
+            const list = document.getElementById('activityList');
+            if (data.activities && data.activities.length > 0) {
+                list.innerHTML = data.activities.map(a => `
+                    <div class="activity-item">
+                        <span>✔ <strong>${a.distance}km</strong> by ${a.mode}</span>
+                        <span class="activity-co2">
+                            +${a.points_earned}pts · ${parseFloat(a.co2_saved || 0).toFixed(2)}kg CO₂
+                        </span>
+                    </div>
+                `).join('');
+            } else {
+                list.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:12px">No activities yet — log your first trip!</p>';
+            }
+
+            // Weekly chart
+            buildChart(weekly || []);
+
+            // Rewards
+            displayRewards(pts);
+
+        } catch (err) {
+            console.error('Dashboard load error:', err);
+            // Optional: Show a user-friendly error message on screen
+            document.getElementById('totalPoints').innerText = "Error Loading";
+            document.getElementById('activityList').innerHTML = '<p style="color:red;text-align:center">Failed to load data. Please refresh.</p>';
+        }
+    }
+
+    // ── BUILD CHART ──
+    function buildChart(weekly) {
+        const days   = weekly.map(r =>
+            new Date(r.day).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' })
+        );
+        const points = weekly.map(r => parseFloat(r.points) || 0);
+        const co2    = weekly.map(r => parseFloat(r.co2)    || 0);
+
+        if (weeklyChart) weeklyChart.destroy();
+
+        if (weekly.length === 0) {
+            document.getElementById('weeklyChart').style.display = 'none';
+            // Avoid adding multiple paragraphs if function runs twice
+            if(!document.getElementById('no-chart-msg')) {
+                const p = document.createElement('p');
+                p.id = 'no-chart-msg';
+                p.style.cssText = 'color:#94a3b8;text-align:center;padding:20px';
+                p.textContent   = 'Log trips to see your weekly chart!';
+                document.getElementById('weeklyChart').parentNode.appendChild(p);
+            }
+            return;
+        }
+
+        // Ensure canvas is visible if data exists
+        document.getElementById('weeklyChart').style.display = 'block';
+        const noChartMsg = document.getElementById('no-chart-msg');
+        if(noChartMsg) noChartMsg.remove();
+
+        weeklyChart = new Chart(document.getElementById('weeklyChart'), {
+            type: 'bar',
+            data: {
+                labels: days,
+                datasets: [
+                    {
+                        label: 'Points',
+                        data: points,
+                        backgroundColor: 'rgba(34,197,94,0.75)',
+                        borderRadius: 6,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'CO₂ Saved (kg)',
+                        data: co2,
+                        backgroundColor: 'rgba(59,130,246,0.75)',
+                        borderRadius: 6,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    y:  { type: 'linear', position: 'left',  title: { display: true, text: 'Points'    } },
+                    y1: { type: 'linear', position: 'right', title: { display: true, text: 'CO₂ (kg)'  },
+                          grid: { drawOnChartArea: false } }
+                }
+            }
+        });
+    }
+
+    // ── REWARDS ──
+    function displayRewards(totalPoints) {
+        const rewards = [
+            { threshold: 100,  title: '10% Off at EcoMart',      code: 'ECOMART10'  },
+            { threshold: 200,  title: 'Free Coffee at GreenCafe', code: 'FREECOFFEE' },
+            { threshold: 500,  title: '20% Off on EcoClothes',    code: 'ECOCLOTH20' },
+            { threshold: 1000, title: 'Free Meal at VeganBite',   code: 'VEGANMEAL'  },
         ];
 
+        const container = document.getElementById('rewards-container');
+        const noMsg     = document.getElementById('no-rewards');
+        container.innerHTML = '';
         let hasRewards = false;
 
-        rewards.forEach(reward => {
-            if (totalPoints >= reward.threshold) {
+        rewards.forEach(r => {
+            if (totalPoints >= r.threshold) {
                 hasRewards = true;
-                let rewardDiv = document.createElement("div");
-                rewardDiv.classList.add("reward-card");
-                rewardDiv.innerHTML = `
-                    <h3>Reward: ${reward.title}</h3>
-                    <p>Coupon Code: <span class="coupon" onclick="copyCode('${reward.code}')">${reward.code}</span></p>
-                `;
-                rewardsContainer.appendChild(rewardDiv);
+                container.innerHTML += `
+                    <div class="reward-card">
+                        <div>
+                            <strong>${r.title}</strong><br>
+                            <small style="color:#64748b">Tap code to copy</small>
+                        </div>
+                        <span class="coupon" onclick="copyCoupon('${r.code}', this)">
+                            ${r.code}
+                        </span>
+                    </div>`;
             }
         });
 
-        noRewardsMessage.style.display = hasRewards ? "none" : "block";
+        noMsg.style.display = hasRewards ? 'none' : 'block';
     }
 
-        </script>
-        <style>
-            body {
-                background-image: url('assets/bg.jpg'); 
-                background-size: cover;  
-                background-position: center; 
-                background-repeat: no-repeat; 
-              }
-        </style>          
-    </body>
+    function copyCoupon(code, el) {
+        navigator.clipboard.writeText(code);
+        const orig = el.textContent;
+        el.textContent = '✓ Copied!';
+        setTimeout(() => { el.textContent = orig; }, 2000);
+    }
+
+    // ── BADGE TOAST ──
+    function showBadgeToast(badge) {
+        document.getElementById('badgeEmoji').textContent = badge.emoji;
+        document.getElementById('badgeName').textContent  = '🏅 ' + badge.name + ' unlocked!';
+        document.getElementById('badgeDesc').textContent  = badge.desc;
+        const toast = document.getElementById('badgeToast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    // ── RESET / CLEAR DATA ──
+    function showResetConfirmation() {
+        document.getElementById('resetPopup').style.display = 'flex';
+    }
+
+    function hideResetConfirmation() {
+        document.getElementById('resetPopup').style.display = 'none';
+    }
+
+    async function clearData() {
+        try {
+            hideResetConfirmation();
+            alert('To fully clear data, contact support or use the admin panel.');
+        } catch (err) {
+            hideResetConfirmation();
+        }
+    }
+
+    // ── INIT ──
+    window.onload = loadDashboard;
+    </script>
+
+</body>
 </html>
