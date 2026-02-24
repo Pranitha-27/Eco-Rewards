@@ -9,23 +9,27 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ── DEFAULT ROUTE: Must come BEFORE express.static ──
+// Default route — redirect root to login
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/login.html'));
 });
 
-// Serve your HTML files from the frontend folder
+// Serve frontend HTML files
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// API Routes
-app.use('/api/auth',   require('./routes/auth'));
-app.use('/api/points', require('./routes/points'));
+// ── API Routes — ALL must be before app.listen() ──
+app.use('/api/auth',        require('./routes/auth'));
+app.use('/api/points',      require('./routes/points'));
+app.use('/api/leaderboard', require('./routes/leaderboard'));
+app.use('/api/challenges',  require('./routes/challenges'));
+app.use('/api/feed',        require('./routes/feed'));
 
 // 404 fallback
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ EcoRewards server running on http://localhost:${PORT}`);

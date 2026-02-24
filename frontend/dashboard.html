@@ -76,10 +76,7 @@
             border-color: white;
         }
 
-        .nav-links {
-            display: flex;
-            gap: 8px;
-        }
+        .nav-links { display: flex; gap: 8px; }
 
         .nav-link {
             background: rgba(255,255,255,0.15);
@@ -93,14 +90,7 @@
             border: 1px solid transparent;
         }
 
-        .nav-link:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .nav-link.active {
-            background: white;
-            color: #4CAF50;
-        }
+        .nav-link:hover { background: rgba(255,255,255,0.3); }
 
         /* ── CONTAINERS ── */
         .container {
@@ -221,6 +211,39 @@
             margin-top: 4px;
         }
 
+        /* ── CHALLENGES ── */
+        .challenge-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            text-align: left;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .challenge-done    { background: #f0fdf4; border: 1.5px solid #86efac; }
+        .challenge-pending { background: #fff;    border: 1.5px solid #e2e8f0; }
+
+        .challenge-title {
+            font-weight: 600;
+            font-size: 0.92rem;
+        }
+
+        .challenge-desc {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 3px;
+        }
+
+        .challenge-bonus {
+            font-weight: 700;
+            font-size: 0.88rem;
+            white-space: nowrap;
+        }
+
         /* ── BUTTONS ── */
         .btn {
             background-color: #4CAF50;
@@ -237,11 +260,7 @@
         }
 
         .btn:hover { background-color: #45a049; }
-
-        .btn-danger {
-            background-color: #ef4444;
-        }
-
+        .btn-danger { background-color: #ef4444; }
         .btn-danger:hover { background-color: #dc2626; }
 
         /* ── POPUP ── */
@@ -288,7 +307,7 @@
         .popup-btn-cancel  { background: #e2e8f0; color: #1a1a1a; }
         .popup-btn-confirm { background: #ef4444; color: white; }
 
-        /* ── BADGE POPUP ── */
+        /* ── BADGE TOAST ── */
         .badge-toast {
             position: fixed;
             bottom: 30px;
@@ -338,7 +357,6 @@
 
         .coupon:hover { background: #dbeafe; }
 
-        /* ── BACK CARD ── */
         .card {
             background-color: rgba(243,241,241,0.95);
             border: 3px solid rgb(24,237,173);
@@ -353,17 +371,21 @@
             justify-content: center;
         }
 
-        /* ── RESPONSIVE ── */
         @media(max-width: 480px) {
             .impact-grid { grid-template-columns: 1fr; }
             .points { font-size: 2rem; }
             .header-title { font-size: 1.1rem; }
         }
     </style>
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#22c55e">
+    <link rel="icon" href="/favicon.ico">
+
 </head>
 <body>
 
-    <!-- ── HEADER WITH USERNAME + LOGOUT ── -->
+    <!-- ── HEADER ── -->
     <div class="header">
         <div class="header-title">🌿 EcoRewards Dashboard</div>
         <div class="header-right">
@@ -423,6 +445,14 @@
         <canvas id="weeklyChart" height="130"></canvas>
     </div>
 
+    <!-- ── DAILY CHALLENGES ── -->
+    <div class="container">
+        <h3>⚡ Today's Challenges</h3>
+        <div id="challengesList">
+            <p style="color:#94a3b8;text-align:center">Loading challenges...</p>
+        </div>
+    </div>
+
     <!-- ── REWARDS ── -->
     <div class="container">
         <h3>🎁 Your Rewards</h3>
@@ -458,21 +488,17 @@
     </div>
 
     <script>
-    // ── CONFIG ──
-    const API   = 'http://localhost:3000/api';
-    const token = localStorage.getItem('token');
+    const API      = 'http://localhost:3000/api';
+    const token    = localStorage.getItem('token');
     const username = localStorage.getItem('username') || 'User';
 
-    // Auth guard
     if (!token) window.location.href = 'login.html';
 
-    // Show username in header immediately
     document.getElementById('headerUsername').textContent = username;
     document.getElementById('welcomeName').textContent    = username;
 
     let weeklyChart = null;
 
-    // ── API HELPER ──
     async function apiCall(url) {
         const res = await fetch(url, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -485,53 +511,38 @@
         return res.json();
     }
 
-    // ── LOGOUT ──
     function logout() {
         localStorage.removeItem('token');
         localStorage.removeItem('username');
         window.location.href = 'login.html';
     }
 
-    // ── LOAD DASHBOARD (FIXED) ──
+    // ── LOAD DASHBOARD ──
     async function loadDashboard() {
         try {
-            // 1. Load Main Data (Points, CO2, Activities, Streak)
-            // We removed the separate '/auth/profile' call to prevent crashes
             const data = await apiCall(`${API}/points`);
-            
-            // 2. Load Weekly Chart Data (Optional - don't crash if this fails)
+
             let weekly = [];
             try {
                 weekly = await apiCall(`${API}/points/weekly`);
             } catch (e) {
-                console.warn('Weekly chart data unavailable', e);
+                console.warn('Weekly data unavailable');
             }
 
-            // --- UPDATE UI ---
+            const pts  = data.points || 0;
+            document.getElementById('totalPoints').innerText     = pts + ' Points';
+            document.getElementById('progressBar').style.width   = Math.min((pts / 1000) * 100, 100) + '%';
 
-            // Points + progress bar
-            const pts = data.points || 0;
-            document.getElementById('totalPoints').innerText = pts + ' Points';
-            document.getElementById('progressBar').style.width =
-                Math.min((pts / 1000) * 100, 100) + '%';
-
-            // Streak (Now comes from main data object)
             if (data.current_streak !== undefined) {
-                document.getElementById('streakBadge').textContent =
-                    `🔥 ${data.current_streak}-day streak`;
+                document.getElementById('streakBadge').textContent = `🔥 ${data.current_streak}-day streak`;
             }
 
-            // CO₂ impact stats
-            // Ensure we handle undefined values gracefully
-            const co2 = parseFloat(data.carbon_saved || 0);
-            const dist = parseFloat(data.total_distance || 0);
-            
-            document.getElementById('totalCO2').innerText = co2.toFixed(2) + ' kg';
+            const co2  = parseFloat(data.carbon_saved    || 0);
+            const dist = parseFloat(data.total_distance  || 0);
+            document.getElementById('totalCO2').innerText      = co2.toFixed(2)  + ' kg';
             document.getElementById('totalDistance').innerText = dist.toFixed(1) + ' km';
-            document.getElementById('treeDays').innerText =
-                Math.round((co2 / 21) * 365);
+            document.getElementById('treeDays').innerText      = Math.round((co2 / 21) * 365);
 
-            // Activity list
             const list = document.getElementById('activityList');
             if (data.activities && data.activities.length > 0) {
                 list.innerHTML = data.activities.map(a => `
@@ -546,17 +557,46 @@
                 list.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:12px">No activities yet — log your first trip!</p>';
             }
 
-            // Weekly chart
             buildChart(weekly || []);
-
-            // Rewards
             displayRewards(pts);
 
         } catch (err) {
             console.error('Dashboard load error:', err);
-            // Optional: Show a user-friendly error message on screen
-            document.getElementById('totalPoints').innerText = "Error Loading";
-            document.getElementById('activityList').innerHTML = '<p style="color:red;text-align:center">Failed to load data. Please refresh.</p>';
+            document.getElementById('totalPoints').innerText      = 'Error Loading';
+            document.getElementById('activityList').innerHTML     = '<p style="color:red;text-align:center">Failed to load data. Please refresh.</p>';
+        }
+    }
+
+    // ── LOAD CHALLENGES ──
+    async function loadChallenges() {
+        const container = document.getElementById('challengesList');
+        try {
+            const res        = await fetch(`${API}/challenges`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const challenges = await res.json();
+
+            if (!Array.isArray(challenges) || challenges.length === 0) {
+                container.innerHTML = '<p style="color:#94a3b8;text-align:center">No challenges today — check back tomorrow!</p>';
+                return;
+            }
+
+            container.innerHTML = challenges.map(c => `
+                <div class="challenge-item ${c.completed ? 'challenge-done' : 'challenge-pending'}">
+                    <div>
+                        <div class="challenge-title" style="color:${c.completed ? '#16a34a' : '#1a1a1a'}">
+                            ${c.completed ? '✅' : '🎯'} ${c.title}
+                        </div>
+                        <div class="challenge-desc">${c.description || ''}</div>
+                    </div>
+                    <div class="challenge-bonus" style="color:${c.completed ? '#16a34a' : '#f97316'}">
+                        ${c.completed ? 'Done!' : '+' + c.bonus_points + ' pts'}
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (err) {
+            container.innerHTML = '<p style="color:#94a3b8;text-align:center">Could not load challenges.</p>';
         }
     }
 
@@ -572,10 +612,9 @@
 
         if (weekly.length === 0) {
             document.getElementById('weeklyChart').style.display = 'none';
-            // Avoid adding multiple paragraphs if function runs twice
-            if(!document.getElementById('no-chart-msg')) {
-                const p = document.createElement('p');
-                p.id = 'no-chart-msg';
+            if (!document.getElementById('no-chart-msg')) {
+                const p     = document.createElement('p');
+                p.id        = 'no-chart-msg';
                 p.style.cssText = 'color:#94a3b8;text-align:center;padding:20px';
                 p.textContent   = 'Log trips to see your weekly chart!';
                 document.getElementById('weeklyChart').parentNode.appendChild(p);
@@ -583,10 +622,9 @@
             return;
         }
 
-        // Ensure canvas is visible if data exists
         document.getElementById('weeklyChart').style.display = 'block';
-        const noChartMsg = document.getElementById('no-chart-msg');
-        if(noChartMsg) noChartMsg.remove();
+        const noMsg = document.getElementById('no-chart-msg');
+        if (noMsg) noMsg.remove();
 
         weeklyChart = new Chart(document.getElementById('weeklyChart'), {
             type: 'bar',
@@ -613,8 +651,8 @@
                 responsive: true,
                 plugins: { legend: { position: 'top' } },
                 scales: {
-                    y:  { type: 'linear', position: 'left',  title: { display: true, text: 'Points'    } },
-                    y1: { type: 'linear', position: 'right', title: { display: true, text: 'CO₂ (kg)'  },
+                    y:  { type: 'linear', position: 'left',  title: { display: true, text: 'Points'   } },
+                    y1: { type: 'linear', position: 'right', title: { display: true, text: 'CO₂ (kg)' },
                           grid: { drawOnChartArea: false } }
                 }
             }
@@ -661,7 +699,6 @@
         setTimeout(() => { el.textContent = orig; }, 2000);
     }
 
-    // ── BADGE TOAST ──
     function showBadgeToast(badge) {
         document.getElementById('badgeEmoji').textContent = badge.emoji;
         document.getElementById('badgeName').textContent  = '🏅 ' + badge.name + ' unlocked!';
@@ -671,7 +708,6 @@
         setTimeout(() => toast.classList.remove('show'), 4000);
     }
 
-    // ── RESET / CLEAR DATA ──
     function showResetConfirmation() {
         document.getElementById('resetPopup').style.display = 'flex';
     }
@@ -680,17 +716,23 @@
         document.getElementById('resetPopup').style.display = 'none';
     }
 
-    async function clearData() {
-        try {
-            hideResetConfirmation();
-            alert('To fully clear data, contact support or use the admin panel.');
-        } catch (err) {
-            hideResetConfirmation();
-        }
+    function clearData() {
+        hideResetConfirmation();
+        alert('Your data is stored securely on the server. Contact support to clear it.');
     }
 
-    // ── INIT ──
-    window.onload = loadDashboard;
+    // ── INIT — load both dashboard and challenges ──
+    window.onload = function() {
+        loadDashboard();
+        loadChallenges();
+    };
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js');
+        });
+    }
+
     </script>
 
 </body>

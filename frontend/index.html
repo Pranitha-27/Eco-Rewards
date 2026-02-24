@@ -9,43 +9,50 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             padding: 20px;
             background-image: url('assets/bg.jpg');
             background-size: cover;
             background-position: center;
         }
 
+        .page-wrap {
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px 0 40px;
+        }
+
         .container {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
-            padding: 40px;
-            max-width: 500px;
+            padding: 30px;
             width: 100%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             text-align: center;
         }
 
         .logo {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: bold;
             color: #2ecc71;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
 
         .logo span { color: #27ae60; }
 
         .subtitle {
             color: #7f8c8d;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             text-align: left;
         }
 
@@ -59,7 +66,7 @@
         .form-group input,
         .form-group select {
             width: 100%;
-            padding: 14px;
+            padding: 13px;
             border: 2px solid #ecf0f1;
             border-radius: 10px;
             font-size: 1rem;
@@ -76,42 +83,58 @@
             background: #2ecc71;
             color: white;
             border: none;
-            padding: 14px 30px;
+            padding: 13px 30px;
             border-radius: 10px;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             width: 100%;
-            margin-top: 10px;
+            margin-top: 8px;
             transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .btn:hover { background: #27ae60; }
         .btn:disabled { background: #95a5a6; cursor: not-allowed; }
 
         .result {
-            margin-top: 20px;
-            padding: 20px;
+            margin-top: 18px;
+            padding: 18px;
             background: #f0fdf4;
             border-radius: 10px;
             border: 2px solid #2ecc71;
             display: none;
+            text-align: left;
         }
 
         .result.show { display: block; }
 
         .result h3 {
-            color: #2ecc71;
+            color: #16a34a;
             margin-bottom: 10px;
+            text-align: center;
         }
 
         .result p {
             color: #2c3e50;
-            margin: 5px 0;
+            margin: 6px 0;
+            font-size: 0.92rem;
         }
 
+        .result p strong { color: #16a34a; }
+
+        .error-msg {
+            color: #e74c3c;
+            margin-top: 10px;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .error-msg.show { display: block; }
+
         .nav-links {
-            margin-top: 30px;
+            margin-top: 20px;
             display: flex;
             gap: 10px;
             justify-content: center;
@@ -122,10 +145,11 @@
             text-decoration: none;
             color: #2ecc71;
             font-weight: 600;
-            padding: 10px 20px;
+            padding: 9px 18px;
             border: 2px solid #2ecc71;
             border-radius: 8px;
             transition: all 0.3s;
+            font-size: 0.9rem;
         }
 
         .nav-links a:hover {
@@ -133,28 +157,58 @@
             color: white;
         }
 
-        .error-msg {
-            color: #e74c3c;
-            margin-top: 10px;
-            display: none;
+        /* ── CHALLENGES ── */
+        .container h3 {
+            color: #1a1a1a;
+            margin-bottom: 14px;
+            font-size: 1.1rem;
         }
 
-        .error-msg.show { display: block; }
+        .challenge-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            text-align: left;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
 
-        .success-msg {
-            color: #2ecc71;
-            margin-top: 10px;
-            display: none;
+        .challenge-done    { background: #f0fdf4; border: 1.5px solid #86efac; }
+        .challenge-pending { background: #fff;    border: 1.5px solid #e2e8f0; }
+
+        .challenge-title {
             font-weight: 600;
+            font-size: 0.92rem;
         }
 
-        .success-msg.show { display: block; }
+        .challenge-desc {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 3px;
+        }
+
+        .challenge-bonus {
+            font-weight: 700;
+            font-size: 0.88rem;
+            white-space: nowrap;
+        }
     </style>
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#22c55e">
+    <link rel="icon" href="/favicon.ico">
+
 </head>
 <body>
+<div class="page-wrap">
+
+    <!-- ── TRIP LOGGER ── -->
     <div class="container">
         <div class="logo">🌿 Eco<span>Rewards</span></div>
-        <p class="subtitle">Track your EcoRewards</p>
+        <p class="subtitle">Track your eco-friendly trips</p>
 
         <form id="tripForm">
             <div class="form-group">
@@ -171,117 +225,158 @@
                     <option value="cycle">🚴 Cycle</option>
                     <option value="bus">🚌 Bus</option>
                     <option value="metro">🚇 Metro</option>
-                    <option value="ev">🚗 Electric Vehicle</option>
+                    <option value="ev">⚡ Electric Vehicle</option>
                 </select>
             </div>
 
             <button type="submit" class="btn" id="submitBtn">📍 Log Trip</button>
             <p class="error-msg" id="errorMsg"></p>
-            <p class="success-msg" id="successMsg"></p>
         </form>
 
         <div class="result" id="result">
             <h3>✅ Trip Logged Successfully!</h3>
-            <p><strong>Points Earned:</strong> <span id="pointsEarned">0</span></p>
-            <p><strong>CO₂ Saved:</strong> <span id="co2Saved">0</span> kg</p>
-            <p><strong>Distance:</strong> <span id="distanceLogged">0</span> km</p>
+            <p>🏆 <strong>Points Earned:</strong> <span id="pointsEarned">0</span></p>
+            <p>🌍 <strong>CO₂ Saved:</strong> <span id="co2Saved">0</span> kg</p>
+            <p>📍 <strong>Distance:</strong> <span id="distanceLogged">0</span> km</p>
+            <p id="streakLine"    style="margin-top:8px;font-weight:600;color:#ea580c"></p>
+            <p id="challengeLine" style="color:#16a34a;font-weight:600"></p>
+            <p id="badgeLine"     style="color:#8b5cf6;font-weight:600"></p>
         </div>
 
         <div class="nav-links">
-            <a href="dashboard.html">📊 View Dashboard</a>
+            <a href="dashboard.html">📊 Dashboard</a>
             <a href="leaderboard.html">🏆 Leaderboard</a>
             <a href="login.html" onclick="logout()">🚪 Logout</a>
         </div>
     </div>
 
-    <script>
-    // ── CONFIG ──
-    const API = 'http://localhost:3000/api';
-    const token = localStorage.getItem('token');
+    <!-- ── DAILY CHALLENGES ── -->
+    <div class="container">
+        <h3>⚡ Today's Challenges</h3>
+        <div id="challengesList">
+            <p style="color:#94a3b8;text-align:center">Loading challenges...</p>
+        </div>
+    </div>
 
-    // Auth guard
-    if (!token) {
-        window.location.href = 'login.html';
+</div>
+
+<script>
+const API   = 'http://localhost:3000/api';
+const token = localStorage.getItem('token');
+
+if (!token) window.location.href = 'login.html';
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    window.location.href = 'login.html';
+}
+
+// ── FORM SUBMIT ──
+document.getElementById('tripForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const distance  = document.getElementById('distance').value;
+    const mode      = document.getElementById('mode').value;
+    const submitBtn = document.getElementById('submitBtn');
+    const errorMsg  = document.getElementById('errorMsg');
+    const result    = document.getElementById('result');
+
+    errorMsg.classList.remove('show');
+    result.classList.remove('show');
+
+    if (!distance || !mode) {
+        errorMsg.textContent = 'Please fill in all fields';
+        errorMsg.classList.add('show');
+        return;
     }
 
-    // ── LOGOUT ──
-    function logout() {
-        localStorage.clear();
-        window.location.href = 'login.html';
+    submitBtn.disabled    = true;
+    submitBtn.textContent = '⏳ Logging...';
+
+    try {
+        const response = await fetch(`${API}/points/add`, {
+            method:  'POST',
+            headers: {
+                'Content-Type':  'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ distance, mode })
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to log trip');
+
+        document.getElementById('pointsEarned').textContent   = data.points;
+        document.getElementById('co2Saved').textContent       = parseFloat(data.co2_saved).toFixed(2);
+        document.getElementById('distanceLogged').textContent = data.distance;
+        document.getElementById('streakLine').textContent     = data.streakMessage || '';
+        document.getElementById('challengeLine').textContent  = data.completedChallenges?.length
+            ? `⚡ Challenge bonus: +${data.bonusPoints} pts!` : '';
+        document.getElementById('badgeLine').textContent      = data.newBadges?.length
+            ? `🏅 New badge: ${data.newBadges[0].emoji} ${data.newBadges[0].name}!` : '';
+
+        result.classList.add('show');
+        document.getElementById('tripForm').reset();
+
+        // Refresh challenges so completed ones go green immediately
+        loadChallenges();
+
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 2500);
+
+    } catch (err) {
+        errorMsg.textContent = err.message || 'Failed to log trip. Is the server running?';
+        errorMsg.classList.add('show');
+    } finally {
+        submitBtn.disabled    = false;
+        submitBtn.textContent = '📍 Log Trip';
     }
+});
 
-    // ── FORM SUBMIT ──
-    document.getElementById('tripForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
+// ── LOAD DAILY CHALLENGES ──
+async function loadChallenges() {
+    const container = document.getElementById('challengesList');
+    try {
+        const res        = await fetch(`${API}/challenges`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const challenges = await res.json();
 
-        const distance = document.getElementById('distance').value;
-        const mode = document.getElementById('mode').value;
-        const submitBtn = document.getElementById('submitBtn');
-        const errorMsg = document.getElementById('errorMsg');
-        const successMsg = document.getElementById('successMsg');
-        const result = document.getElementById('result');
-
-        // Reset messages
-        errorMsg.classList.remove('show');
-        successMsg.classList.remove('show');
-        result.classList.remove('show');
-
-        // Validate
-        if (!distance || !mode) {
-            errorMsg.textContent = 'Please fill in all fields';
-            errorMsg.classList.add('show');
+        if (!Array.isArray(challenges) || challenges.length === 0) {
+            container.innerHTML = '<p style="color:#94a3b8;text-align:center">No challenges today — check back tomorrow!</p>';
             return;
         }
 
-        // Disable button during submission
-        submitBtn.disabled = true;
-        submitBtn.textContent = '⏳ Logging...';
+        container.innerHTML = challenges.map(c => `
+            <div class="challenge-item ${c.completed ? 'challenge-done' : 'challenge-pending'}">
+                <div>
+                    <div class="challenge-title" style="color:${c.completed ? '#16a34a' : '#1a1a1a'}">
+                        ${c.completed ? '✅' : '🎯'} ${c.title}
+                    </div>
+                    <div class="challenge-desc">${c.description || ''}</div>
+                </div>
+                <div class="challenge-bonus" style="color:${c.completed ? '#16a34a' : '#f97316'}">
+                    ${c.completed ? 'Done!' : '+' + c.bonus_points + ' pts'}
+                </div>
+            </div>
+        `).join('');
 
-        try {
-            // ── ACTUALLY SEND DATA TO BACKEND ──
-            const response = await fetch(`${API}/points/add`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ distance, mode })
-            });
+    } catch (err) {
+        container.innerHTML = '<p style="color:#94a3b8;text-align:center">Could not load challenges.</p>';
+    }
+}
 
-            const data = await response.json();
+// ── INIT ──
+window.onload = function() {
+    loadChallenges();
+};
 
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to log trip');
-            }
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js');
+  });
+}
 
-            // Show success
-            successMsg.textContent = data.streakMessage || 'Trip logged successfully!';
-            successMsg.classList.add('show');
-
-            // Show result details
-            document.getElementById('pointsEarned').textContent = data.points;
-            document.getElementById('co2Saved').textContent = data.co2_saved.toFixed(2);
-            document.getElementById('distanceLogged').textContent = data.distance;
-            result.classList.add('show');
-
-            // Reset form
-            document.getElementById('tripForm').reset();
-
-            // Auto-redirect to dashboard after 2 seconds
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 2000);
-
-        } catch (err) {
-            console.error('Error logging trip:', err);
-            errorMsg.textContent = err.message || 'Failed to log trip. Please try again.';
-            errorMsg.classList.add('show');
-        } finally {
-            // Re-enable button
-            submitBtn.disabled = false;
-            submitBtn.textContent = '📍 Log Trip';
-        }
-    });
-    </script>
+</script>
 </body>
 </html>

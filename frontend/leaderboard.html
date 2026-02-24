@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html><head>
+  <title>EcoRewards — Leaderboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family:sans-serif; background:#f0fdf4; margin:0; padding:20px; }
+    .header { background:#4CAF50; color:white; padding:20px; text-align:center; border-radius:12px; margin-bottom:20px; }
+    .filters { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+    .filter-btn { padding:8px 16px; border:2px solid #4CAF50; border-radius:999px; background:white; color:#4CAF50; cursor:pointer; font-weight:bold; transition:all 0.2s; }
+    .filter-btn.active { background:#4CAF50; color:white; }
+    .my-rank { background:#fff7ed; border:2px solid #fed7aa; border-radius:12px; padding:16px; text-align:center; margin-bottom:20px; font-size:1.2rem; font-weight:bold; color:#ea580c; }
+    .board { background:white; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+    .row { display:flex; align-items:center; gap:16px; padding:14px 20px; border-bottom:1px solid #f1f5f9; }
+    .row:last-child { border-bottom:none; }
+    .row.me { background:#f0fdf4; }
+    .rank { font-family:monospace; font-size:1.1rem; font-weight:bold; width:32px; text-align:center; }
+    .rank.gold   { color:#f59e0b; }
+    .rank.silver { color:#94a3b8; }
+    .rank.bronze { color:#b45309; }
+    .name { flex:1; font-weight:500; }
+    .score { font-weight:bold; color:#16a34a; }
+    .streak { font-size:0.85rem; color:#ea580c; }
+    .back-btn { display:inline-block; margin-top:20px; padding:10px 20px; background:#4CAF50; color:white; border-radius:8px; text-decoration:none; font-weight:bold; }
+  </style>
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#22c55e">
+  <link rel="icon" href="/favicon.ico">
+
+</head><body>
+  <div class="header"><h2>🏆 Leaderboard</h2></div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="load('points','week',this)">This Week · Points</button>
+    <button class="filter-btn" onclick="load('co2','week',this)">This Week · CO₂</button>
+    <button class="filter-btn" onclick="load('points','month',this)">This Month</button>
+    <button class="filter-btn" onclick="load('points','all',this)">All Time</button>
+  </div>
+
+  <div class="my-rank" id="myRank">Loading your rank...</div>
+  <div class="board" id="board"></div>
+  <a href="dashboard.html" class="back-btn">← Back to Dashboard</a>
+
+  <script>
+    const API   = 'http://localhost:3000/api';
+    const token = localStorage.getItem('token');
+    const me    = localStorage.getItem('username');
+    if (!token) window.location.href = 'login.html';
+
+    const medals = ['🥇','🥈','🥉'];
+    const rankClass = ['gold','silver','bronze'];
+
+    async function load(type, period, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      const res  = await fetch(`${API}/leaderboard?type=${type}&period=${period}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      document.getElementById('myRank').textContent =
+        data.myRank ? `You are ranked #${data.myRank} this ${period}` : 'Log a trip to appear on the board!';
+      document.getElementById('board').innerHTML = data.leaderboard.map((r, i) => `
+        <div class="row ${r.username === me ? 'me' : ''}">
+          <div class="rank ${rankClass[i] || ''}">${medals[i] || '#' + (i+1)}</div>
+          <div class="name">${r.username} ${r.username === me ? '(you)' : ''}</div>
+          <div class="streak">🔥${r.current_streak}d</div>
+          <div class="score">${parseFloat(r.score).toFixed(type==='points'?0:2)} ${type==='co2'?'kg':type==='distance'?'km':'pts'}</div>
+        </div>`).join('');
+    }
+    load('points','week', null);
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js');
+      });
+    }
+
+  </script>
+</body></html>
