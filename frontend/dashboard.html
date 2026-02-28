@@ -642,31 +642,19 @@ async function clearData() {
     const btn = document.getElementById('confirmResetBtn');
     btn.textContent = 'Clearing...';
     btn.disabled = true;
-
     try {
         const res = await fetch(`${API}/auth/clear-data`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
-
         if (!res.ok) throw new Error('Server error');
-
-        // 1. Close the confirmation popup
         hideResetConfirmation();
-
-        // 2. Refresh the stats on the page without logging out
-        await loadDashboard(); 
-        await loadChallenges();
-
-        // 3. Inform the user
-        showToast('All your progress has been reset!', 'success');
-
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        window.location.href = 'login.html';
     } catch(err) {
-        console.error(err);
         hideResetConfirmation();
         showToast('Failed to clear data. Please try again.', 'error');
-    } finally {
-        // Reset button state
         btn.textContent = 'Reset';
         btn.disabled = false;
     }
