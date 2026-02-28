@@ -106,19 +106,13 @@ router.post('/add', auth, async (req, res) => {
 
     for (const ch of challenges) {
       try {
-        await db.query(
+        const [insertResult] = await db.query(
           `INSERT IGNORE INTO ChallengeCompletions (user_id, challenge_id)
            VALUES (?, ?)`,
           [req.user.id, ch.challenge_id]
         );
-        // Check if it was actually inserted (not a duplicate)
-        const [check] = await db.query(
-          `SELECT id FROM ChallengeCompletions
-           WHERE user_id = ? AND challenge_id = ?
-           AND completed_at >= NOW() - INTERVAL 5 SECOND`,
-          [req.user.id, ch.challenge_id]
-        );
-        if (check.length > 0) {
+        // affectedRows = 1 means it was newly inserted (not a duplicate)
+        if (insertResult.affectedRows > 0) {
           bonusPoints += ch.bonus_points;
           completedChallenges.push({
             title: ch.title,
@@ -126,7 +120,8 @@ router.post('/add', auth, async (req, res) => {
           });
         }
       } catch (e) {
-        // Already completed today — skip silently
+        // Skip silently — don't let challenge errors fail the whole request
+        console.warn('Challenge completion warning:', e.message);
       }
     }
 
