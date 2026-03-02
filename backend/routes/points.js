@@ -212,4 +212,19 @@ router.get('/badges', auth, async (req, res) => {
   }
 });
 
+router.delete('/clear', auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    await db.query('DELETE FROM Activities WHERE user_id = ?', [userId]);
+    await db.query('DELETE FROM UserBadges WHERE user_id = ?', [userId]);
+    await db.query('DELETE FROM ChallengeCompletions WHERE user_id = ?', [userId]);
+    await db.query(`UPDATE Users SET points=0, carbon_saved=0, total_distance=0,
+      current_streak=0, longest_streak=0, last_active_date=NULL WHERE id=?`, [userId]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Clear error:', err);
+    res.status(500).json({ error: 'Failed to clear data' });
+  }
+});
+
 module.exports = router;

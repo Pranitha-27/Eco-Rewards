@@ -313,11 +313,11 @@
 <!-- Reset popup -->
 <div class="popup-overlay" id="resetPopup">
     <div class="popup-box">
-        <h3>Clear Data?</h3>
-        <p>Your data is stored securely on the server. Contact support to clear it.</p>
+        <h3>Clear All Data?</h3>
+        <p>This will permanently delete all your activities, badges, points and streaks. This cannot be undone.</p>
         <div class="popup-btns">
             <button class="popup-btn popup-cancel" onclick="hidePopup()">Cancel</button>
-            <button class="popup-btn popup-confirm" onclick="hidePopup()">OK</button>
+            <button class="popup-btn popup-confirm" onclick="clearData()">Clear All</button>
         </div>
     </div>
 </div>
@@ -343,6 +343,32 @@ let weeklyChart = null;
 function logout() { localStorage.removeItem('token'); localStorage.removeItem('username'); window.location.href = 'login.html'; }
 function showPopup() { document.getElementById('resetPopup').style.display = 'flex'; }
 function hidePopup() { document.getElementById('resetPopup').style.display = 'none'; }
+
+async function clearData() {
+    const btn = document.querySelector('.popup-confirm');
+    try {
+        btn.textContent = '⏳ Clearing...';
+        btn.disabled = true;
+
+        const res  = await fetch(`${API}/points/clear`, {
+            method:  'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to clear');
+
+        hidePopup();
+        // Reload dashboard to show zeroed stats
+        loadDashboard();
+        loadChallenges();
+
+    } catch (err) {
+        alert('Failed to clear data: ' + err.message);
+    } finally {
+        btn.textContent = 'Clear All';
+        btn.disabled = false;
+    }
+}
 
 async function apiCall(url) {
     const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
