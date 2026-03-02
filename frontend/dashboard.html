@@ -1,622 +1,492 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Eco Rewards Dashboard</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoRewards — Dashboard</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/favicon.ico">
+    <meta name="theme-color" content="#1a3a2a">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 0 0 40px 0;
-            background-image: url('assets/bg.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            font-family: 'Inter', sans-serif;
             min-height: 100vh;
+            background:
+                radial-gradient(ellipse at 10% 10%, rgba(74,158,107,0.3) 0%, transparent 55%),
+                radial-gradient(ellipse at 90% 90%, rgba(200,169,110,0.18) 0%, transparent 50%),
+                linear-gradient(160deg, #0a1f12 0%, #1a3a2a 40%, #0f2a1a 100%);
+            padding-bottom: 60px;
         }
 
-        .header {
-            width: 100%;
-            background-color: #4CAF50;
-            padding: 16px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-        .header-title { color: white; font-size: 1.4rem; font-weight: bold; }
-        .header-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-        .header-user  { color: rgba(255,255,255,0.9); font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
-        .header-user span { font-weight: 700; color: white; }
-        .logout-btn {
-            background: rgba(255,255,255,0.2); color: white;
-            border: 1px solid rgba(255,255,255,0.4);
-            padding: 7px 16px; border-radius: 999px;
-            cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
-        }
-        .logout-btn:hover { background: rgba(255,255,255,0.35); }
-        .nav-links { display: flex; gap: 8px; }
-        .nav-link {
-            background: rgba(255,255,255,0.15); color: white; text-decoration: none;
-            padding: 7px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 600;
-            transition: all 0.2s; border: 1px solid transparent;
-        }
-        .nav-link:hover { background: rgba(255,255,255,0.3); }
+        .orb { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; animation: orbFloat ease-in-out infinite; }
+        .orb1 { width: 600px; height: 600px; background: rgba(74,158,107,0.15); top:-200px; left:-200px; animation-duration:12s; }
+        .orb2 { width: 400px; height: 400px; background: rgba(200,169,110,0.12); bottom:-150px; right:-150px; animation-duration:16s; animation-delay:-7s; }
+        @keyframes orbFloat { 0%,100%{transform:translate(0,0);} 50%{transform:translate(12px,-12px);} }
 
-        /* PAGE LAYOUT — main content + sidebar */
-        .page-body {
-            display: flex;
-            gap: 20px;
-            width: 96%;
-            max-width: 1100px;
-            margin-top: 20px;
-            align-items: flex-start;
+        /* ── NAV ── */
+        nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 32px;
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            position: sticky; top: 0; z-index: 100;
+            flex-wrap: wrap; gap: 12px;
         }
+        .nav-brand { display: flex; align-items: center; gap: 10px; font-family: 'Playfair Display', serif; font-size: 1.3rem; color: #a8d8a8; font-weight: 700; }
+        .nav-links { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .nav-link { padding: 8px 16px; border-radius: 10px; font-size: 0.83rem; font-weight: 500; color: rgba(255,255,255,0.6); text-decoration: none; transition: all 0.2s; border: 1px solid transparent; }
+        .nav-link:hover { background: rgba(255,255,255,0.08); color: white; border-color: rgba(255,255,255,0.12); }
+        .nav-user { font-size: 0.82rem; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 6px; }
+        .nav-user strong { color: #a8d8a8; }
+        .logout-btn { padding: 8px 18px; border-radius: 10px; background: rgba(255,100,100,0.1); border: 1px solid rgba(255,100,100,0.2); color: #fca5a5; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
+        .logout-btn:hover { background: rgba(255,100,100,0.2); }
 
-        .main-col {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            min-width: 0;
-        }
+        /* ── LAYOUT ── */
+        .page { max-width: 680px; margin: 0 auto; padding: 32px 20px; display: flex; flex-direction: column; gap: 24px; position: relative; z-index: 1; }
 
-        .ad-col {
-            width: 260px;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            position: sticky;
-            top: 20px;
-        }
-
-        .container {
-            background: rgba(255,255,255,0.95);
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        /* ── HERO STATS ── */
+        .hero {
             text-align: center;
-            width: 100%;
+            padding: 36px 28px;
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 28px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
         }
-        .container h2, .container h3 { margin-bottom: 12px; color: #1a1a1a; }
 
-        .points { font-size: 2.5rem; color: #4CAF50; font-weight: bold; margin: 8px 0; }
+        .hero-greeting {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.45);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+        }
+
+        .hero-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .hero-name span { color: #a8d8a8; }
+
+        .hero-points {
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a8d8a8, #f0e68c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .hero-pts-label { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
 
         .streak-badge {
             display: inline-flex; align-items: center; gap: 8px;
-            background: #fff7ed; border: 1px solid #fed7aa; border-radius: 999px;
-            padding: 8px 18px; font-weight: bold; color: #ea580c;
-            margin: 10px 0; font-size: 0.95rem;
+            background: rgba(234,88,12,0.15); border: 1px solid rgba(234,88,12,0.3);
+            border-radius: 999px; padding: 8px 20px;
+            font-weight: 600; color: #fb923c; font-size: 0.9rem; margin: 16px 0;
         }
 
-        .progress-container { width: 100%; background-color: #ddd; border-radius: 10px; margin: 12px 0; height: 20px; overflow: hidden; }
-        .progress-bar { width: 0%; height: 100%; background-color: #4CAF50; border-radius: 10px; transition: width 0.6s ease; }
-        .progress-label { font-size: 0.8rem; color: #64748b; margin-bottom: 6px; }
+        .progress-wrap { margin-top: 8px; }
+        .progress-label { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-bottom: 8px; text-align: left; }
+        .progress-track { background: rgba(255,255,255,0.1); border-radius: 999px; height: 8px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #4a9e6b, #a8d8a8); border-radius: 999px; transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1); }
 
-        .activity-list { text-align: left; margin-top: 10px; max-height: 200px; overflow-y: auto; }
+        /* ── GLASS CARD ── */
+        .glass {
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.11);
+            border-radius: 24px;
+            padding: 24px 28px;
+            box-shadow: 0 6px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        .glass-title {
+            font-size: 0.95rem; font-weight: 600; color: #a8d8a8;
+            margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+        }
+
+        /* ── IMPACT GRID ── */
+        .impact-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+
+        .impact-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.09);
+            border-radius: 18px; padding: 18px 12px; text-align: center;
+            transition: transform 0.2s;
+        }
+        .impact-card:hover { transform: translateY(-3px); }
+        .impact-icon { font-size: 1.6rem; margin-bottom: 8px; }
+        .impact-val { font-size: 1.6rem; font-weight: 700; color: #a8d8a8; }
+        .impact-lbl { font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+        /* ── ACTIVITY LIST ── */
         .activity-item {
-            padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem;
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 0.88rem; flex-wrap: wrap; gap: 6px;
         }
         .activity-item:last-child { border-bottom: none; }
-        .activity-co2 { color: #16a34a; font-weight: 600; font-size: 0.85rem; }
+        .activity-left { color: rgba(255,255,255,0.75); }
+        .activity-left strong { color: white; }
+        .activity-right { color: #6dbf8a; font-weight: 600; font-size: 0.82rem; }
 
-        .impact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
-        .impact-stat { background: #f0fdf4; border-radius: 12px; padding: 14px 10px; text-align: center; border: 1px solid #bbf7d0; }
-        .impact-num { font-size: 1.5rem; font-weight: bold; color: #16a34a; }
-        .impact-label { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
+        /* ── CHART ── */
+        .chart-wrap { position: relative; height: 200px; }
 
-        .challenge-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; margin-bottom: 10px; border-radius: 10px; text-align: left; flex-wrap: wrap; gap: 8px; }
-        .challenge-done    { background: #f0fdf4; border: 1.5px solid #86efac; }
-        .challenge-pending { background: #fff;    border: 1.5px solid #e2e8f0; }
-        .challenge-title { font-weight: 600; font-size: 0.92rem; }
-        .challenge-desc  { font-size: 0.8rem; color: #64748b; margin-top: 3px; }
-        .challenge-bonus { font-weight: 700; font-size: 0.88rem; white-space: nowrap; }
-
-        .btn { background-color: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: background 0.2s; text-decoration: none; display: inline-block; }
-        .btn:hover     { background-color: #45a049; }
-        .btn-danger    { background-color: #ef4444; }
-        .btn-danger:hover { background-color: #dc2626; }
-
-        .popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .popup-content { background: white; padding: 24px; border-radius: 12px; text-align: center; max-width: 380px; width: 90%; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
-        .popup-content h3 { margin-bottom: 10px; }
-        .popup-content p  { color: #64748b; margin-bottom: 20px; }
-        .popup-buttons { display: flex; justify-content: space-between; gap: 12px; }
-        .popup-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
-        .popup-btn-cancel  { background: #e2e8f0; color: #1a1a1a; }
-        .popup-btn-confirm { background: #ef4444; color: white; }
-
-        .badge-toast {
-            position: fixed; bottom: 30px; right: 30px;
-            background: linear-gradient(135deg, #16a34a, #4CAF50);
-            color: white; padding: 16px 22px; border-radius: 14px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2); font-weight: 600; font-size: 1rem;
-            z-index: 9999; transform: translateX(120%); transition: transform 0.4s ease; max-width: 280px;
+        /* ── CHALLENGES ── */
+        .challenge-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 16px; margin-bottom: 10px; border-radius: 14px;
+            flex-wrap: wrap; gap: 8px; transition: transform 0.2s;
         }
-        .badge-toast.show { transform: translateX(0); }
-        .badge-toast .badge-emoji { font-size: 2rem; display: block; margin-bottom: 6px; }
+        .challenge-item:hover { transform: translateX(4px); }
+        .challenge-done { background: rgba(74,158,107,0.14); border: 1px solid rgba(74,158,107,0.28); }
+        .challenge-pending { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); }
+        .challenge-title { font-weight: 600; font-size: 0.88rem; }
+        .challenge-desc { font-size: 0.75rem; color: rgba(255,255,255,0.38); margin-top: 3px; }
+        .challenge-bonus { font-weight: 700; font-size: 0.85rem; white-space: nowrap; }
 
-        .reward-card {
-            border: 2px solid rgb(25,199,25); padding: 14px; border-radius: 10px;
-            margin: 12px auto; background-color: #f0fdf4; text-align: left;
-            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+        /* ── REWARDS ── */
+        .reward-item {
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px; padding: 14px 18px; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;
         }
-        .coupon {
-            font-weight: bold; color: #1d4ed8; cursor: pointer;
-            font-family: monospace; font-size: 1rem;
-            background: #eff6ff; padding: 4px 10px; border-radius: 6px; border: 1px dashed #93c5fd;
+        .reward-title { font-weight: 600; font-size: 0.9rem; color: white; }
+        .reward-sub { font-size: 0.75rem; color: rgba(255,255,255,0.38); margin-top: 3px; }
+        .coupon-code {
+            font-family: monospace; font-size: 0.9rem; font-weight: 700;
+            background: rgba(240,198,96,0.15); color: #f0c660;
+            border: 1px dashed rgba(240,198,96,0.4); border-radius: 8px;
+            padding: 6px 14px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
         }
-        .coupon:hover { background: #dbeafe; }
+        .coupon-code:hover { background: rgba(240,198,96,0.25); }
 
-        .card {
-            background-color: rgba(243,241,241,0.95); border: 3px solid rgb(24,237,173);
-            border-radius: 10px; padding: 16px 24px; margin: 0 auto;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center;
-            width: 100%;
+        /* ── BOTTOM NAV CARD ── */
+        .nav-card {
+            display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px; padding: 20px;
         }
 
-        /* ── AD BANNERS ── */
-        .ad-banner {
-            border-radius: 14px;
-            overflow: hidden;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.13);
-            text-decoration: none;
-            display: block;
-            transition: transform 0.2s, box-shadow 0.2s;
-            position: relative;
+        .nav-card-btn {
+            padding: 12px 24px; background: rgba(74,158,107,0.2);
+            border: 1px solid rgba(74,158,107,0.35); border-radius: 12px;
+            color: #a8d8a8; font-size: 0.9rem; font-weight: 600;
+            text-decoration: none; transition: all 0.2s;
         }
-        .ad-banner:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-        }
-        .ad-banner-inner {
-            padding: 18px 16px 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            min-height: 160px;
-            justify-content: space-between;
-        }
-        .ad-tag {
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            opacity: 0.6;
-            color: white;
-        }
-        .ad-logo {
-            font-size: 1.3rem;
-            font-weight: 900;
-            color: white;
-            letter-spacing: -0.5px;
-        }
-        .ad-headline {
-            font-size: 1rem;
-            font-weight: 700;
-            color: white;
-            line-height: 1.3;
-        }
-        .ad-sub {
-            font-size: 0.75rem;
-            color: rgba(255,255,255,0.85);
-            line-height: 1.4;
-        }
-        .ad-cta {
-            display: inline-block;
-            background: white;
-            border-radius: 999px;
-            padding: 7px 16px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            margin-top: 4px;
-            align-self: flex-start;
-        }
-        .ad-watermark {
-            position: absolute;
-            top: 8px; right: 10px;
-            font-size: 0.6rem;
-            color: rgba(255,255,255,0.45);
-            font-weight: 600;
-            letter-spacing: 0.05em;
-        }
+        .nav-card-btn:hover { background: rgba(74,158,107,0.35); transform: translateY(-2px); }
 
-        /* individual brand colors */
-        .ad-patagonia { background: linear-gradient(135deg, #1a3d2b 0%, #2d6a4f 100%); }
-        .ad-patagonia .ad-cta { color: #1a3d2b; }
+        /* ── POPUP ── */
+        .popup-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 1000; justify-content: center; align-items: center; }
+        .popup-box { background: rgba(20,50,30,0.95); border: 1px solid rgba(255,255,255,0.15); border-radius: 24px; padding: 36px; max-width: 380px; width: 90%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+        .popup-box h3 { color: white; font-size: 1.3rem; margin-bottom: 10px; }
+        .popup-box p { color: rgba(255,255,255,0.55); margin-bottom: 24px; font-size: 0.9rem; }
+        .popup-btns { display: flex; gap: 12px; }
+        .popup-btn { flex: 1; padding: 12px; border-radius: 12px; border: none; cursor: pointer; font-weight: 600; font-size: 0.9rem; font-family: 'Inter', sans-serif; }
+        .popup-cancel { background: rgba(255,255,255,0.1); color: white; }
+        .popup-confirm { background: rgba(220,38,38,0.8); color: white; }
 
-        .ad-lime { background: linear-gradient(135deg, #1a1a1a 0%, #2d9e1a 100%); }
-        .ad-lime .ad-cta { color: #1a5e0a; }
-
-        .ad-tentree { background: linear-gradient(135deg, #2c5f2e 0%, #4a8f4c 100%); }
-        .ad-tentree .ad-cta { color: #2c5f2e; }
-
-        .ad-happycow { background: linear-gradient(135deg, #7b3f00 0%, #c86b2a 100%); }
-        .ad-happycow .ad-cta { color: #7b3f00; }
-
-        .ad-section-label {
-            font-size: 0.7rem;
-            color: rgba(255,255,255,0.7);
-            text-align: center;
-            margin-top: 4px;
-            letter-spacing: 0.05em;
+        /* ── BADGE TOAST ── */
+        #badgeToast {
+            position: fixed; bottom: 28px; right: 28px;
+            background: linear-gradient(135deg, rgba(45,107,71,0.96), rgba(74,158,107,0.96));
+            backdrop-filter: blur(20px); border: 1px solid rgba(109,191,138,0.4);
+            color: white; padding: 18px 24px; border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4); font-weight: 600;
+            z-index: 9999; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+            max-width: 280px;
         }
+        #badgeToast.show { transform: translateX(0); }
+        #badgeToast .b-emoji { font-size: 2.2rem; display: block; margin-bottom: 6px; }
 
-        /* STATUS TOAST */
-        #statusToast {
-            position: fixed; bottom: 30px; left: 50%;
-            transform: translateX(-50%) translateY(80px);
-            background: #333; color: #fff;
-            padding: 14px 28px; border-radius: 8px; font-size: 0.95rem;
-            z-index: 9999; transition: transform 0.3s ease;
-            max-width: 90%; text-align: center; display: none;
-        }
-        #statusToast.show { transform: translateX(-50%) translateY(0); display: block; }
-        #statusToast.success { background: #276749; }
-        #statusToast.error   { background: #c53030; }
-
-        @media(max-width: 768px) {
-            .page-body { flex-direction: column; }
-            .ad-col { width: 100%; flex-direction: row; flex-wrap: wrap; position: static; }
-            .ad-banner { flex: 1; min-width: 220px; }
-        }
-        @media(max-width: 480px) {
-            .impact-grid { grid-template-columns: 1fr; }
-            .points { font-size: 2rem; }
-            .header-title { font-size: 1.1rem; }
-        }
+        @media(max-width: 500px) { .impact-grid { grid-template-columns: 1fr 1fr; } .hero-points { font-size: 3rem; } }
     </style>
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#22c55e">
-    <link rel="icon" href="/favicon.ico">
 </head>
 <body>
 
-<div class="header">
-    <div class="header-title">🌿 EcoRewards Dashboard</div>
-    <div class="header-right">
-        <div class="nav-links">
-            <a href="index.html"       class="nav-link">🏠 Home</a>
-            <a href="leaderboard.html" class="nav-link">🏆 Leaderboard</a>
-        </div>
-        <div class="header-user">👤 Hello, <span id="headerUsername">...</span></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<nav>
+    <div class="nav-brand">🌿 EcoRewards</div>
+    <div class="nav-links">
+        <a href="index.html"       class="nav-link">🏠 Log Trip</a>
+        <a href="leaderboard.html" class="nav-link">🏆 Leaderboard</a>
+        <div class="nav-user">👤 <strong id="navUsername"></strong></div>
         <button class="logout-btn" onclick="logout()">Logout →</button>
     </div>
-</div>
+</nav>
 
-<div class="page-body">
+<div class="page">
 
-    <!-- MAIN CONTENT -->
-    <div class="main-col">
-
-        <div class="container">
-            <h2>Welcome, <span id="welcomeName" style="color:#4CAF50"></span>!</h2>
-            <p>You have earned:</p>
-            <div class="points" id="totalPoints">0 Points</div>
-            <div id="streakBadge" class="streak-badge">🔥 0-day streak</div>
-            <p class="progress-label">Progress towards next reward (1000 pts):</p>
-            <div class="progress-container">
-                <div class="progress-bar" id="progressBar"></div>
-            </div>
-            <h3 style="margin-top:16px">Recent Activities</h3>
-            <div class="activity-list" id="activityList">
-                <p style="color:#94a3b8;text-align:center">Loading activities...</p>
-            </div>
-            <br>
-            <button class="btn btn-danger" onclick="showResetConfirmation()">Clear Data</button>
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-greeting">Your Impact Dashboard</div>
+        <div class="hero-name">Hello, <span id="heroName"></span> 🌱</div>
+        <div class="hero-points" id="heroPoints">0</div>
+        <div class="hero-pts-label">Total Points</div>
+        <div class="streak-badge" id="streakBadge">🔥 0-day streak</div>
+        <div class="progress-wrap">
+            <div class="progress-label">Progress to next reward — <span id="progressPct">0</span>%</div>
+            <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
         </div>
-
-        <div class="container">
-            <h3>🌍 Your Environmental Impact</h3>
-            <div class="impact-grid">
-                <div class="impact-stat">
-                    <div class="impact-num" id="totalCO2">0 kg</div>
-                    <div class="impact-label">CO₂ Saved</div>
-                </div>
-                <div class="impact-stat">
-                    <div class="impact-num" id="totalDistance">0 km</div>
-                    <div class="impact-label">Total Distance</div>
-                </div>
-                <div class="impact-stat">
-                    <div class="impact-num" id="treeDays">0</div>
-                    <div class="impact-label">🌳 Tree-Days</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="container">
-            <h3>📊 Weekly Progress</h3>
-            <canvas id="weeklyChart" height="130"></canvas>
-        </div>
-
-        <div class="container">
-            <h3>⚡ Today's Challenges</h3>
-            <div id="challengesList">
-                <p style="color:#94a3b8;text-align:center">Loading challenges...</p>
-            </div>
-        </div>
-
-        <div class="container">
-            <h3>🎁 Your Rewards</h3>
-            <div id="rewards-container"></div>
-            <p id="no-rewards" style="color:#94a3b8;display:none">Earn more points to unlock rewards!</p>
-        </div>
-
-        <div class="card">
-            <a href="index.html"       class="btn">🏠 Log a Trip</a>
-            <a href="leaderboard.html" class="btn">🏆 Leaderboard</a>
-        </div>
-
     </div>
 
-    <!-- AD SIDEBAR -->
-    <div class="ad-col">
-
-        <a href="https://www.patagonia.com" target="_blank" class="ad-banner ad-patagonia">
-            <div class="ad-watermark">AD</div>
-            <div class="ad-banner-inner">
-                <div>
-                    <div class="ad-tag">Sponsored • Eco Fashion</div>
-                    <div class="ad-logo">PATAGONIA</div>
-                </div>
-                <div>
-                    <div class="ad-headline">Gear built for the planet, not the landfill.</div>
-                    <div class="ad-sub">Fair trade certified. 1% for the planet. Shop sustainably.</div>
-                </div>
-                <div class="ad-cta" style="color:#1a3d2b">Shop Now →</div>
+    <!-- Environmental Impact -->
+    <div class="glass">
+        <div class="glass-title">🌍 Environmental Impact</div>
+        <div class="impact-grid">
+            <div class="impact-card">
+                <div class="impact-icon">☁️</div>
+                <div class="impact-val" id="totalCO2">0</div>
+                <div class="impact-lbl">kg CO₂ Saved</div>
             </div>
-        </a>
-
-        <a href="https://www.li.me" target="_blank" class="ad-banner ad-lime">
-            <div class="ad-watermark">AD</div>
-            <div class="ad-banner-inner">
-                <div>
-                    <div class="ad-tag">Sponsored • Green Transport</div>
-                    <div class="ad-logo">🛴 Lime</div>
-                </div>
-                <div>
-                    <div class="ad-headline">Zero emissions. Zero excuses.</div>
-                    <div class="ad-sub">E-bikes & scooters available near you. Earn EcoRewards points!</div>
-                </div>
-                <div class="ad-cta" style="color:#1a5e0a">Ride Free →</div>
+            <div class="impact-card">
+                <div class="impact-icon">📍</div>
+                <div class="impact-val" id="totalDist">0</div>
+                <div class="impact-lbl">km Travelled</div>
             </div>
-        </a>
-
-        <a href="https://www.tentree.com" target="_blank" class="ad-banner ad-tentree">
-            <div class="ad-watermark">AD</div>
-            <div class="ad-banner-inner">
-                <div>
-                    <div class="ad-tag">Sponsored • Plant Trees</div>
-                    <div class="ad-logo">🌱 tentree</div>
-                </div>
-                <div>
-                    <div class="ad-headline">10 trees planted with every purchase.</div>
-                    <div class="ad-sub">Sustainable apparel that gives back to the earth.</div>
-                </div>
-                <div class="ad-cta" style="color:#2c5f2e">Plant Now →</div>
+            <div class="impact-card">
+                <div class="impact-icon">🌳</div>
+                <div class="impact-val" id="treeDays">0</div>
+                <div class="impact-lbl">Tree-Days</div>
             </div>
-        </a>
+        </div>
+    </div>
 
-        <a href="https://www.happycow.net" target="_blank" class="ad-banner ad-happycow">
-            <div class="ad-watermark">AD</div>
-            <div class="ad-banner-inner">
-                <div>
-                    <div class="ad-tag">Sponsored • Vegan Food</div>
-                    <div class="ad-logo">🐄 HappyCow</div>
-                </div>
-                <div>
-                    <div class="ad-headline">Find vegan restaurants near you.</div>
-                    <div class="ad-sub">30,000+ plant-based spots worldwide. Eat green, live green.</div>
-                </div>
-                <div class="ad-cta" style="color:#7b3f00">Find Food →</div>
-            </div>
-        </a>
+    <!-- Recent Activities -->
+    <div class="glass">
+        <div class="glass-title">📋 Recent Activities</div>
+        <div id="activityList">
+            <p style="color:rgba(255,255,255,0.3);text-align:center;padding:16px">Loading activities...</p>
+        </div>
+    </div>
 
-        <div class="ad-section-label">Ads support EcoRewards 🌿</div>
+    <!-- Weekly Chart -->
+    <div class="glass">
+        <div class="glass-title">📊 Weekly Progress</div>
+        <div class="chart-wrap">
+            <canvas id="weeklyChart"></canvas>
+        </div>
+    </div>
 
+    <!-- Daily Challenges -->
+    <div class="glass">
+        <div class="glass-title">⚡ Today's Challenges</div>
+        <div id="challengesList">
+            <p style="color:rgba(255,255,255,0.3);text-align:center;padding:16px">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Rewards -->
+    <div class="glass">
+        <div class="glass-title">🎁 Your Rewards</div>
+        <div id="rewardsContainer"></div>
+        <p id="noRewards" style="color:rgba(255,255,255,0.3);text-align:center;padding:16px;display:none">
+            Keep earning points to unlock rewards!
+        </p>
+    </div>
+
+    <!-- Nav -->
+    <div class="nav-card">
+        <a href="index.html"       class="nav-card-btn">🏠 Log a Trip</a>
+        <a href="leaderboard.html" class="nav-card-btn">🏆 Leaderboard</a>
+        <button class="nav-card-btn" onclick="showPopup()" style="background:rgba(220,38,38,0.15);border-color:rgba(220,38,38,0.35);color:#fca5a5;cursor:pointer;font-family:inherit;font-size:0.9rem;font-weight:600;">🗑️ Clear Data</button>
     </div>
 
 </div>
 
-<!-- RESET POPUP -->
-<div id="resetPopup" class="popup-overlay">
-    <div class="popup-content">
-        <h3>Confirm Reset</h3>
-        <p>Are you sure you want to clear all your data? This cannot be undone.</p>
-        <div class="popup-buttons">
-            <button class="popup-btn popup-btn-cancel"  onclick="hideResetConfirmation()">Cancel</button>
-            <button class="popup-btn popup-btn-confirm" id="confirmResetBtn" onclick="clearData()">Reset</button>
+<!-- Reset popup -->
+<div class="popup-overlay" id="resetPopup">
+    <div class="popup-box">
+        <h3>Clear Data?</h3>
+        <p>Your data is stored securely on the server. Contact support to clear it.</p>
+        <div class="popup-btns">
+            <button class="popup-btn popup-cancel" onclick="hidePopup()">Cancel</button>
+            <button class="popup-btn popup-confirm" onclick="hidePopup()">OK</button>
         </div>
     </div>
 </div>
 
-<!-- BADGE TOAST -->
-<div class="badge-toast" id="badgeToast">
-    <span class="badge-emoji" id="badgeEmoji">🏅</span>
-    <div id="badgeName">Badge Earned!</div>
-    <div id="badgeDesc" style="font-size:0.8rem;opacity:0.85;margin-top:4px"></div>
+<!-- Badge toast -->
+<div id="badgeToast">
+    <span class="b-emoji" id="bEmoji">🏅</span>
+    <div id="bName">Badge Unlocked!</div>
+    <div id="bDesc" style="font-size:0.78rem;opacity:0.7;margin-top:4px"></div>
 </div>
-
-<!-- STATUS TOAST -->
-<div id="statusToast"></div>
 
 <script>
-const API      = 'http://localhost:3000/api';
-const token    = localStorage.getItem('token');
-const username = localStorage.getItem('username') || 'User';
+const API   = 'http://localhost:3000/api';
+const token = localStorage.getItem('token');
+const uname = localStorage.getItem('username') || 'User';
 
 if (!token) window.location.href = 'login.html';
-
-document.getElementById('headerUsername').textContent = username;
-document.getElementById('welcomeName').textContent    = username;
+document.getElementById('navUsername').textContent = uname;
+document.getElementById('heroName').textContent    = uname;
 
 let weeklyChart = null;
 
-function showToast(msg, type = 'error') {
-    const t = document.getElementById('statusToast');
-    t.textContent = msg;
-    t.className = 'show ' + type;
-    setTimeout(() => { t.className = ''; t.style.display = 'none'; }, 3500);
-}
+function logout() { localStorage.removeItem('token'); localStorage.removeItem('username'); window.location.href = 'login.html'; }
+function showPopup() { document.getElementById('resetPopup').style.display = 'flex'; }
+function hidePopup() { document.getElementById('resetPopup').style.display = 'none'; }
 
 async function apiCall(url) {
     const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
     if (res.status === 401 || res.status === 403) { localStorage.clear(); window.location.href = 'login.html'; }
-    if (!res.ok) throw new Error(`API Error: ${res.status}`);
+    if (!res.ok) throw new Error(`API ${res.status}`);
     return res.json();
-}
-
-function logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    window.location.href = 'login.html';
 }
 
 async function loadDashboard() {
     try {
         const data = await apiCall(`${API}/points`);
         let weekly = [];
-        try { weekly = await apiCall(`${API}/points/weekly`); } catch(e) {}
+        try { weekly = await apiCall(`${API}/points/weekly`); } catch {}
 
         const pts = data.points || 0;
-        document.getElementById('totalPoints').innerText   = pts + ' Points';
-        document.getElementById('progressBar').style.width = Math.min((pts / 1000) * 100, 100) + '%';
+        document.getElementById('heroPoints').textContent  = pts.toLocaleString();
+        const pct = Math.min(Math.round((pts / 1000) * 100), 100);
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressPct').textContent  = pct;
 
-        if (data.current_streak !== undefined)
+        if (data.current_streak !== undefined) {
             document.getElementById('streakBadge').textContent = `🔥 ${data.current_streak}-day streak`;
+        }
 
         const co2  = parseFloat(data.carbon_saved   || 0);
-        const dist = parseFloat(data.total_distance  || 0);
-        document.getElementById('totalCO2').innerText      = co2.toFixed(2)  + ' kg';
-        document.getElementById('totalDistance').innerText = dist.toFixed(1) + ' km';
-        document.getElementById('treeDays').innerText      = Math.round((co2 / 21) * 365);
+        const dist = parseFloat(data.total_distance || 0);
+        document.getElementById('totalCO2').textContent  = co2.toFixed(2);
+        document.getElementById('totalDist').textContent = dist.toFixed(1);
+        document.getElementById('treeDays').textContent  = Math.round((co2/21)*365);
 
-        const list = document.getElementById('activityList');
-        if (data.activities && data.activities.length > 0) {
-            list.innerHTML = data.activities.map(a => `
+        const aList = document.getElementById('activityList');
+        if (data.activities?.length) {
+            aList.innerHTML = data.activities.map(a => `
                 <div class="activity-item">
-                    <span>✔ <strong>${a.distance}km</strong> by ${a.mode}</span>
-                    <span class="activity-co2">+${a.points_earned}pts · ${parseFloat(a.co2_saved||0).toFixed(2)}kg CO₂</span>
-                </div>`).join('');
+                    <div class="activity-left">✔ <strong>${a.distance}km</strong> by ${a.mode}</div>
+                    <div class="activity-right">+${a.points_earned}pts · ${parseFloat(a.co2_saved||0).toFixed(2)}kg CO₂</div>
+                </div>
+            `).join('');
         } else {
-            list.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:12px">No activities yet — log your first trip!</p>';
+            aList.innerHTML = '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:16px">No activities yet — log your first trip!</p>';
         }
 
         buildChart(weekly || []);
         displayRewards(pts);
-
-    } catch(err) {
-        console.error('Dashboard load error:', err);
-        document.getElementById('totalPoints').innerText  = 'Error Loading';
-        document.getElementById('activityList').innerHTML = '<p style="color:red;text-align:center">Failed to load data. Please refresh.</p>';
+    } catch (err) {
+        console.error(err);
+        document.getElementById('heroPoints').textContent = '—';
     }
 }
 
 async function loadChallenges() {
-    const container = document.getElementById('challengesList');
+    const c = document.getElementById('challengesList');
     try {
-        const res        = await fetch(`${API}/challenges`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await fetch(`${API}/challenges`, { headers:{'Authorization':`Bearer ${token}`} });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const challenges = await res.json();
-        if (!Array.isArray(challenges) || challenges.length === 0) {
-            container.innerHTML = '<p style="color:#94a3b8;text-align:center">No challenges today — check back tomorrow!</p>';
+        console.log('Challenges loaded:', challenges);
+        if (!Array.isArray(challenges) || !challenges.length) {
+            c.innerHTML = '<p style="color:rgba(255,255,255,0.3);text-align:center;padding:12px">No challenges today — check back tomorrow!</p>';
             return;
         }
-        container.innerHTML = challenges.map(c => `
-            <div class="challenge-item ${c.completed ? 'challenge-done' : 'challenge-pending'}">
+        c.innerHTML = challenges.map(ch => `
+            <div class="challenge-item ${ch.completed ? 'challenge-done' : 'challenge-pending'}">
                 <div>
-                    <div class="challenge-title" style="color:${c.completed ? '#16a34a' : '#1a1a1a'}">
-                        ${c.completed ? '✅' : '🎯'} ${c.title}
+                    <div class="challenge-title" style="color:${ch.completed ? '#6dbf8a' : 'rgba(255,255,255,0.8)'}">
+                        ${ch.completed ? '✅' : '🎯'} ${ch.title}
                     </div>
-                    <div class="challenge-desc">${c.description || ''}</div>
+                    <div class="challenge-desc">${ch.description || ''}</div>
                 </div>
-                <div class="challenge-bonus" style="color:${c.completed ? '#16a34a' : '#f97316'}">
-                    ${c.completed ? 'Done!' : '+' + c.bonus_points + ' pts'}
+                <div class="challenge-bonus" style="color:${ch.completed ? '#6dbf8a' : '#f0c060'}">
+                    ${ch.completed ? 'Done!' : '+' + ch.bonus_points + ' pts'}
                 </div>
-            </div>`).join('');
-    } catch(err) {
-        container.innerHTML = '<p style="color:#94a3b8;text-align:center">Could not load challenges.</p>';
+            </div>
+        `).join('');
+    } catch (err) {
+        console.error('Challenges error:', err);
+        c.innerHTML = '<p style="color:rgba(255,255,255,0.3);text-align:center">Could not load challenges.</p>';
     }
 }
 
 function buildChart(weekly) {
-    const days   = weekly.map(r => new Date(r.day).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' }));
-    const points = weekly.map(r => parseFloat(r.points) || 0);
-    const co2    = weekly.map(r => parseFloat(r.co2)    || 0);
-
+    const canvas = document.getElementById('weeklyChart');
     if (weeklyChart) weeklyChart.destroy();
-
-    if (weekly.length === 0) {
-        document.getElementById('weeklyChart').style.display = 'none';
-        if (!document.getElementById('no-chart-msg')) {
+    if (!weekly.length) {
+        canvas.style.display = 'none';
+        if (!document.getElementById('noChartMsg')) {
             const p = document.createElement('p');
-            p.id = 'no-chart-msg'; p.style.cssText = 'color:#94a3b8;text-align:center;padding:20px';
+            p.id = 'noChartMsg';
+            p.style.cssText = 'color:rgba(255,255,255,0.3);text-align:center;padding:20px;';
             p.textContent = 'Log trips to see your weekly chart!';
-            document.getElementById('weeklyChart').parentNode.appendChild(p);
+            canvas.parentNode.appendChild(p);
         }
         return;
     }
+    canvas.style.display = 'block';
+    document.getElementById('noChartMsg')?.remove();
 
-    document.getElementById('weeklyChart').style.display = 'block';
-    const noMsg = document.getElementById('no-chart-msg');
-    if (noMsg) noMsg.remove();
+    const labels = weekly.map(r => new Date(r.day).toLocaleDateString('en-IN', { weekday:'short', day:'numeric' }));
+    const pts    = weekly.map(r => parseFloat(r.points) || 0);
+    const co2    = weekly.map(r => parseFloat(r.co2)    || 0);
 
-    weeklyChart = new Chart(document.getElementById('weeklyChart'), {
+    weeklyChart = new Chart(canvas, {
         type: 'bar',
         data: {
-            labels: days,
+            labels,
             datasets: [
-                { label: 'Points', data: points, backgroundColor: 'rgba(34,197,94,0.75)', borderRadius: 6, yAxisID: 'y' },
-                { label: 'CO₂ Saved (kg)', data: co2, backgroundColor: 'rgba(59,130,246,0.75)', borderRadius: 6, yAxisID: 'y1' }
+                { label:'Points', data:pts, backgroundColor:'rgba(109,191,138,0.7)', borderRadius:8, yAxisID:'y' },
+                { label:'CO₂ (kg)', data:co2, backgroundColor:'rgba(240,198,96,0.6)', borderRadius:8, yAxisID:'y1' }
             ]
         },
         options: {
-            responsive: true,
-            plugins: { legend: { position: 'top' } },
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { labels: { color:'rgba(255,255,255,0.6)', font:{size:11} } } },
             scales: {
-                y:  { type: 'linear', position: 'left',  title: { display: true, text: 'Points'   } },
-                y1: { type: 'linear', position: 'right', title: { display: true, text: 'CO₂ (kg)' }, grid: { drawOnChartArea: false } }
+                x:  { ticks:{ color:'rgba(255,255,255,0.45)', font:{size:10} }, grid:{ color:'rgba(255,255,255,0.05)' } },
+                y:  { position:'left',  ticks:{ color:'rgba(255,255,255,0.45)', font:{size:10} }, grid:{ color:'rgba(255,255,255,0.05)' }, title:{ display:true, text:'Points',  color:'rgba(255,255,255,0.4)', font:{size:10} } },
+                y1: { position:'right', ticks:{ color:'rgba(255,255,255,0.45)', font:{size:10} }, grid:{ drawOnChartArea:false }, title:{ display:true, text:'CO₂ kg', color:'rgba(255,255,255,0.4)', font:{size:10} } }
             }
         }
     });
 }
 
-function displayRewards(totalPoints) {
+function displayRewards(pts) {
     const rewards = [
-        { threshold: 100,  title: '10% Off at EcoMart',      code: 'ECOMART10',  url: 'https://www.patagonia.com' },
-        { threshold: 200,  title: 'Free Coffee at GreenCafe', code: 'FREECOFFEE', url: 'https://www.starbucks.com'  },
-        { threshold: 500,  title: '20% Off on EcoClothes',    code: 'ECOCLOTH20', url: 'https://www.tentree.com'   },
-        { threshold: 1000, title: 'Free Meal at VeganBite',   code: 'VEGANMEAL',  url: 'https://www.happycow.net'  },
+        { threshold:100,  title:'10% Off at EcoMart',      code:'ECOMART10'  },
+        { threshold:200,  title:'Free Coffee at GreenCafe', code:'FREECOFFEE' },
+        { threshold:500,  title:'20% Off on EcoClothes',   code:'ECOCLOTH20' },
+        { threshold:1000, title:'Free Meal at VeganBite',  code:'VEGANMEAL'  },
     ];
-    const container = document.getElementById('rewards-container');
-    const noMsg     = document.getElementById('no-rewards');
+    const container = document.getElementById('rewardsContainer');
+    const noMsg     = document.getElementById('noRewards');
     container.innerHTML = '';
-    let hasRewards = false;
+    let has = false;
     rewards.forEach(r => {
-        if (totalPoints >= r.threshold) {
-            hasRewards = true;
+        if (pts >= r.threshold) {
+            has = true;
             container.innerHTML += `
-                <div class="reward-card">
-                    <div>
-                        <strong>${r.title}</strong><br>
-                        <small style="color:#64748b">
-                            Tap code to copy &nbsp;•&nbsp;
-                            <a href="${r.url}" target="_blank" style="color:#16a34a;text-decoration:none;font-weight:600">Visit site →</a>
-                        </small>
-                    </div>
-                    <span class="coupon" onclick="copyCoupon('${r.code}', this)">${r.code}</span>
+                <div class="reward-item">
+                    <div><div class="reward-title">🎁 ${r.title}</div><div class="reward-sub">Tap code to copy</div></div>
+                    <div class="coupon-code" onclick="copyCoupon('${r.code}',this)">${r.code}</div>
                 </div>`;
         }
     });
-    noMsg.style.display = hasRewards ? 'none' : 'block';
+    noMsg.style.display = has ? 'none' : 'block';
 }
 
 function copyCoupon(code, el) {
@@ -626,49 +496,8 @@ function copyCoupon(code, el) {
     setTimeout(() => { el.textContent = orig; }, 2000);
 }
 
-function showBadgeToast(badge) {
-    document.getElementById('badgeEmoji').textContent = badge.emoji;
-    document.getElementById('badgeName').textContent  = '🏅 ' + badge.name + ' unlocked!';
-    document.getElementById('badgeDesc').textContent  = badge.desc;
-    const toast = document.getElementById('badgeToast');
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 4000);
-}
-
-function showResetConfirmation() { document.getElementById('resetPopup').style.display = 'flex'; }
-function hideResetConfirmation() { document.getElementById('resetPopup').style.display = 'none'; }
-
-async function clearData() {
-    const btn = document.getElementById('confirmResetBtn');
-    btn.textContent = 'Clearing...';
-    btn.disabled = true;
-    try {
-        const res = await fetch(`${API}/auth/clear-data`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error('Server error');
-        hideResetConfirmation();
-        localStorage.removeItem('token');
-        localStorage.removeItem('username');
-        window.location.href = 'login.html';
-    } catch(err) {
-        hideResetConfirmation();
-        showToast('Failed to clear data. Please try again.', 'error');
-        btn.textContent = 'Reset';
-        btn.disabled = false;
-    }
-}
-
-window.onload = function() {
-    loadDashboard();
-    loadChallenges();
-};
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js'); });
-}
+window.onload = function() { loadDashboard(); loadChallenges(); };
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 </script>
-
 </body>
 </html>

@@ -42,3 +42,35 @@ app.listen(PORT, async () => {
   // Schedule automatic refresh every midnight
   scheduleDailyRefresh(db);
 });
+
+// Auto-seed daily challenges
+async function seedDailyChallenges() {
+  const db = require('./config/db');
+  const today = new Date().toISOString().split('T')[0];
+  const [existing] = await db.query(
+    'SELECT COUNT(*) as count FROM DailyChallenges WHERE active_date = ?', [today]
+  );
+  if (existing[0].count > 0) return; // already seeded today
+
+  await db.query(`
+    INSERT INTO DailyChallenges 
+      (challenge_id, title, description, target_value, target_mode, bonus_points, active_date)
+    VALUES
+      (?, ?, ?, ?, ?, ?, ?),
+      (?, ?, ?, ?, ?, ?, ?),
+      (?, ?, ?, ?, ?, ?, ?),
+      (?, ?, ?, ?, ?, ?, ?),
+      (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      `cycle_5km_${today}`,  'Cycle 5km Today',   'Hop on a bike for at least 5km',    5,   'cycle', 100, today,
+      `walk_2km_${today}`,   'Walk 2km Today',    'Take a 2km walk anywhere',          2,   'walk',  50,  today,
+      `run_3km_${today}`,    'Run 3km Today',     'Go for a 3km run',                  3,   'run',   75,  today,
+      `metro_${today}`,      'Take the Metro',    'Any metro trip counts',             0.1, 'metro', 40,  today,
+      `any_trip_${today}`,   'Log Any Eco Trip',  'Any green trip earns bonus points', 0.1, null,    25,  today,
+    ]
+  );
+  console.log(`✅ Daily challenges seeded for ${today}`);
+}
+
+// Call it after DB connects
+seedDailyChallenges().catch(console.error);

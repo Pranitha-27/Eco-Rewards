@@ -1,216 +1,320 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>EcoRewards — Leaderboard</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoRewards — Leaderboard</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/favicon.ico">
+    <meta name="theme-color" content="#1a3a2a">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body { font-family: sans-serif; background: #f0fdf4; min-height: 100vh; }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background:
+                radial-gradient(ellipse at 15% 20%, rgba(74,158,107,0.3) 0%, transparent 55%),
+                radial-gradient(ellipse at 85% 80%, rgba(200,169,110,0.18) 0%, transparent 50%),
+                linear-gradient(160deg, #0a1f12 0%, #1a3a2a 40%, #0f2a1a 100%);
+            padding-bottom: 60px;
+        }
 
-    .header { background: #4CAF50; color: white; padding: 20px; text-align: center; margin-bottom: 20px; }
-    .header h2 { font-size: 1.5rem; }
+        .orb { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; animation: orbFloat ease-in-out infinite; }
+        .orb1 { width: 600px; height: 600px; background: rgba(74,158,107,0.15); top:-200px; left:-200px; animation-duration:14s; }
+        .orb2 { width: 350px; height: 350px; background: rgba(200,169,110,0.12); bottom:-100px; right:-100px; animation-duration:17s; animation-delay:-8s; }
+        @keyframes orbFloat { 0%,100%{transform:translate(0,0);} 50%{transform:translate(10px,-10px);} }
 
-    /* PAGE LAYOUT */
-    .page-body {
-        display: flex;
-        gap: 20px;
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 0 20px 40px;
-        align-items: flex-start;
-    }
+        /* ── NAV ── */
+        nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 32px;
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            position: sticky; top: 0; z-index: 100;
+            flex-wrap: wrap; gap: 12px;
+        }
+        .nav-brand { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: #a8d8a8; font-weight: 700; }
+        .nav-links { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .nav-link { padding: 8px 16px; border-radius: 10px; font-size: 0.83rem; font-weight: 500; color: rgba(255,255,255,0.6); text-decoration: none; transition: all 0.2s; border: 1px solid transparent; }
+        .nav-link:hover { background: rgba(255,255,255,0.08); color: white; border-color: rgba(255,255,255,0.12); }
+        .logout-btn { padding: 8px 18px; border-radius: 10px; background: rgba(255,100,100,0.1); border: 1px solid rgba(255,100,100,0.2); color: #fca5a5; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
+        .logout-btn:hover { background: rgba(255,100,100,0.2); }
 
-    .main-col { flex: 1; min-width: 0; }
+        /* ── PAGE ── */
+        .page { max-width: 640px; margin: 0 auto; padding: 32px 20px; display: flex; flex-direction: column; gap: 24px; position: relative; z-index: 1; }
 
-    .ad-col {
-        width: 240px;
-        flex-shrink: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        position: sticky;
-        top: 20px;
-    }
+        /* ── HEADER ── */
+        .lb-header {
+            text-align: center;
+            padding: 36px 24px;
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 28px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+        }
 
-    .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-    .filter-btn { padding: 8px 16px; border: 2px solid #4CAF50; border-radius: 999px; background: white; color: #4CAF50; cursor: pointer; font-weight: bold; transition: all 0.2s; }
-    .filter-btn.active { background: #4CAF50; color: white; }
+        .lb-trophy { font-size: 3.5rem; display: block; margin-bottom: 12px; animation: trophyBounce 2s ease-in-out infinite; }
+        @keyframes trophyBounce { 0%,100%{transform:translateY(0) rotate(-5deg);} 50%{transform:translateY(-8px) rotate(5deg);} }
 
-    .my-rank { background: #fff7ed; border: 2px solid #fed7aa; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 20px; font-size: 1.2rem; font-weight: bold; color: #ea580c; }
+        .lb-title { font-family: 'Playfair Display', serif; font-size: 2rem; background: linear-gradient(135deg, #a8d8a8, #f0e68c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .lb-sub { font-size: 0.85rem; color: rgba(255,255,255,0.4); margin-top: 6px; }
 
-    .board { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .row { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-bottom: 1px solid #f1f5f9; }
-    .row:last-child { border-bottom: none; }
-    .row.me { background: #f0fdf4; }
-    .rank { font-family: monospace; font-size: 1.1rem; font-weight: bold; width: 32px; text-align: center; }
-    .rank.gold   { color: #f59e0b; }
-    .rank.silver { color: #94a3b8; }
-    .rank.bronze { color: #b45309; }
-    .name  { flex: 1; font-weight: 500; }
-    .score { font-weight: bold; color: #16a34a; }
-    .streak { font-size: 0.85rem; color: #ea580c; }
+        /* ── MY RANK ── */
+        .my-rank {
+            background: rgba(234,88,12,0.12);
+            border: 1px solid rgba(234,88,12,0.28);
+            border-radius: 16px; padding: 16px 24px;
+            text-align: center; color: #fb923c;
+            font-weight: 600; font-size: 1rem;
+        }
 
-    .back-btn { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; border-radius: 8px; text-decoration: none; font-weight: bold; }
+        /* ── FILTERS ── */
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    /* ── AD BANNERS ── */
-    .ad-banner {
-        border-radius: 14px; overflow: hidden;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.13);
-        text-decoration: none; display: block;
-        transition: transform 0.2s, box-shadow 0.2s;
-        position: relative;
-    }
-    .ad-banner:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
-    .ad-banner-inner { padding: 18px 16px 14px; display: flex; flex-direction: column; gap: 8px; min-height: 155px; justify-content: space-between; }
-    .ad-tag      { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.6; color: white; }
-    .ad-logo     { font-size: 1.2rem; font-weight: 900; color: white; letter-spacing: -0.5px; }
-    .ad-headline { font-size: 0.95rem; font-weight: 700; color: white; line-height: 1.3; }
-    .ad-sub      { font-size: 0.72rem; color: rgba(255,255,255,0.85); line-height: 1.4; }
-    .ad-cta      { display: inline-block; background: white; border-radius: 999px; padding: 6px 14px; font-size: 0.75rem; font-weight: 700; margin-top: 4px; align-self: flex-start; }
-    .ad-watermark { position: absolute; top: 8px; right: 10px; font-size: 0.6rem; color: rgba(255,255,255,0.45); font-weight: 600; }
+        .filter-btn {
+            padding: 9px 18px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.55);
+            cursor: pointer; font-size: 0.82rem; font-weight: 500;
+            transition: all 0.2s; font-family: 'Inter', sans-serif;
+        }
 
-    .ad-patagonia { background: linear-gradient(135deg, #1a3d2b 0%, #2d6a4f 100%); }
-    .ad-lime      { background: linear-gradient(135deg, #1a1a1a 0%, #2d9e1a 100%); }
-    .ad-tentree   { background: linear-gradient(135deg, #2c5f2e 0%, #4a8f4c 100%); }
-    .ad-happycow  { background: linear-gradient(135deg, #7b3f00 0%, #c86b2a 100%); }
+        .filter-btn:hover { background: rgba(255,255,255,0.1); color: white; }
 
-    .ad-section-label { font-size: 0.7rem; color: #94a3b8; text-align: center; margin-top: 4px; }
+        .filter-btn.active {
+            background: rgba(74,158,107,0.25);
+            border-color: rgba(74,158,107,0.5);
+            color: #a8d8a8;
+        }
 
-    @media(max-width: 768px) {
-        .page-body { flex-direction: column; }
-        .ad-col { width: 100%; flex-direction: row; flex-wrap: wrap; position: static; }
-        .ad-banner { flex: 1; min-width: 200px; }
-    }
-  </style>
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#22c55e">
-  <link rel="icon" href="/favicon.ico">
+        /* ── BOARD ── */
+        .glass {
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.11);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 6px 32px rgba(0,0,0,0.35);
+        }
+
+        /* ── TOP 3 PODIUM ── */
+        .podium {
+            display: flex; align-items: flex-end; justify-content: center;
+            gap: 12px; padding: 28px 20px 0;
+        }
+
+        .podium-card {
+            text-align: center; flex: 1; max-width: 160px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 18px 18px 0 0;
+            padding: 16px 12px 20px;
+            position: relative;
+            transition: transform 0.2s;
+        }
+        .podium-card:hover { transform: translateY(-4px); }
+
+        .podium-card.first {
+            background: linear-gradient(180deg, rgba(212,175,55,0.2), rgba(212,175,55,0.08));
+            border-color: rgba(212,175,55,0.35);
+            padding-top: 24px;
+        }
+
+        .podium-card.second {
+            background: linear-gradient(180deg, rgba(192,192,192,0.15), rgba(192,192,192,0.05));
+            border-color: rgba(192,192,192,0.25);
+        }
+
+        .podium-card.third {
+            background: linear-gradient(180deg, rgba(180,105,55,0.15), rgba(180,105,55,0.05));
+            border-color: rgba(180,105,55,0.25);
+        }
+
+        .podium-medal { font-size: 2rem; display: block; margin-bottom: 8px; }
+        .podium-name { font-size: 0.85rem; font-weight: 600; color: white; margin-bottom: 4px; word-break: break-word; }
+        .podium-score { font-size: 1.1rem; font-weight: 700; }
+        .podium-score.gold { color: #f0c060; }
+        .podium-score.silver { color: #c0c0c0; }
+        .podium-score.bronze { color: #cd7f32; }
+        .podium-streak { font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-top: 4px; }
+        .podium-you { position: absolute; top: 8px; right: 8px; background: rgba(74,158,107,0.4); border-radius: 999px; font-size: 0.65rem; padding: 2px 8px; color: #a8d8a8; font-weight: 600; }
+
+        /* ── REST OF THE BOARD ── */
+        .board-rest { padding: 8px 0 8px; }
+
+        .board-row {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: background 0.2s;
+        }
+        .board-row:last-child { border-bottom: none; }
+        .board-row:hover { background: rgba(255,255,255,0.04); }
+        .board-row.me { background: rgba(74,158,107,0.1); border-left: 3px solid #4a9e6b; }
+
+        .row-rank { font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.4); width: 28px; text-align: center; flex-shrink: 0; }
+        .row-name { flex: 1; font-size: 0.9rem; font-weight: 500; color: rgba(255,255,255,0.8); }
+        .row-name.me-name { color: #a8d8a8; }
+        .row-streak { font-size: 0.78rem; color: #fb923c; flex-shrink: 0; }
+        .row-score { font-size: 0.92rem; font-weight: 700; color: #a8d8a8; flex-shrink: 0; }
+
+        .empty-state {
+            text-align: center; padding: 48px 24px;
+            color: rgba(255,255,255,0.3); font-size: 0.9rem;
+        }
+        .empty-state .empty-icon { font-size: 3rem; display: block; margin-bottom: 12px; opacity: 0.4; }
+
+        @media(max-width: 500px) { .podium { gap: 8px; } .podium-card { padding: 12px 8px 16px; } }
+    </style>
 </head>
 <body>
 
-  <div class="header"><h2>🏆 Leaderboard</h2></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
 
-  <div class="page-body">
+<nav>
+    <div class="nav-brand">🌿 EcoRewards</div>
+    <div class="nav-links">
+        <a href="index.html"    class="nav-link">🏠 Log Trip</a>
+        <a href="dashboard.html" class="nav-link">📊 Dashboard</a>
+        <button class="logout-btn" onclick="logout()">Logout →</button>
+    </div>
+</nav>
 
-    <!-- MAIN CONTENT -->
-    <div class="main-col">
+<div class="page">
 
-      <div class="filters">
-        <button class="filter-btn active" onclick="load('points','week',this)">This Week · Points</button>
-        <button class="filter-btn" onclick="load('co2','week',this)">This Week · CO₂</button>
-        <button class="filter-btn" onclick="load('points','month',this)">This Month</button>
-        <button class="filter-btn" onclick="load('points','all',this)">All Time</button>
-      </div>
-
-      <div class="my-rank" id="myRank">Loading your rank...</div>
-      <div class="board" id="board"></div>
-      <a href="dashboard.html" class="back-btn">← Back to Dashboard</a>
-
+    <div class="lb-header">
+        <span class="lb-trophy">🏆</span>
+        <div class="lb-title">Leaderboard</div>
+        <div class="lb-sub">Compete with the community. Top eco-warriors win exclusive rewards.</div>
     </div>
 
-    <!-- AD SIDEBAR -->
-    <div class="ad-col">
+    <div class="my-rank" id="myRank">Loading your rank...</div>
 
-        <a href="https://www.patagonia.com" target="_blank" class="ad-banner ad-patagonia">
-            <div class="ad-watermark">AD</div>
-            <div class="ad-banner-inner">
-                <div>
-                    <div class="ad-tag">Sponsored • Eco Fashion</div>
-                    <div class="ad-logo">PATAGONIA</div>
-                </div>
-                <div>
-                    <div class="ad-headline">Worn wear. Less waste.</div>
-                    <div class="ad-sub">Buy less, demand more. Repair, reuse, recycle.</div>
-                </div>
-                <div class="ad-cta" style="color:#1a3d2b">Shop Now →</div>
-            </div>
-        </a>
-
-        <a href="https://www.li.me" target="_blank" class="ad-banner ad-lime">
-            <div class="ad-watermark">AD</div>
-            <div class="ad-banner-inner">
-                <div>
-                    <div class="ad-tag">Sponsored • Micro Mobility</div>
-                    <div class="ad-logo">🛴 Lime</div>
-                </div>
-                <div>
-                    <div class="ad-headline">Skip the traffic. Save the planet.</div>
-                    <div class="ad-sub">E-scooters & bikes near you. First ride free.</div>
-                </div>
-                <div class="ad-cta" style="color:#1a5e0a">Ride Now →</div>
-            </div>
-        </a>
-
-        <a href="https://www.tentree.com" target="_blank" class="ad-banner ad-tentree">
-            <div class="ad-watermark">AD</div>
-            <div class="ad-banner-inner">
-                <div>
-                    <div class="ad-tag">Sponsored • Reforestation</div>
-                    <div class="ad-logo">🌱 tentree</div>
-                </div>
-                <div>
-                    <div class="ad-headline">Every purchase plants trees.</div>
-                    <div class="ad-sub">Join 100M trees planted. Wear the change.</div>
-                </div>
-                <div class="ad-cta" style="color:#2c5f2e">Shop Green →</div>
-            </div>
-        </a>
-
-        <a href="https://www.happycow.net" target="_blank" class="ad-banner ad-happycow">
-            <div class="ad-watermark">AD</div>
-            <div class="ad-banner-inner">
-                <div>
-                    <div class="ad-tag">Sponsored • Plant Based</div>
-                    <div class="ad-logo">🐄 HappyCow</div>
-                </div>
-                <div>
-                    <div class="ad-headline">Eat plant-based, live better.</div>
-                    <div class="ad-sub">Find vegan restaurants in 180+ countries.</div>
-                </div>
-                <div class="ad-cta" style="color:#7b3f00">Find Food →</div>
-            </div>
-        </a>
-
-        <div class="ad-section-label">Ads support EcoRewards 🌿</div>
-
+    <div class="filters">
+        <button class="filter-btn active" onclick="load('points','week',this)">📅 This Week · Points</button>
+        <button class="filter-btn" onclick="load('co2','week',this)">🌍 This Week · CO₂</button>
+        <button class="filter-btn" onclick="load('points','month',this)">📆 This Month</button>
+        <button class="filter-btn" onclick="load('points','all',this)">🏅 All Time</button>
     </div>
 
-  </div>
+    <div class="glass" id="boardWrap">
+        <div class="empty-state"><span class="empty-icon">🌱</span>Loading leaderboard...</div>
+    </div>
 
-  <script>
-    const API   = 'http://localhost:3000/api';
-    const token = localStorage.getItem('token');
-    const me    = localStorage.getItem('username');
-    if (!token) window.location.href = 'login.html';
+    <div style="text-align:center">
+        <a href="dashboard.html" style="color:#a8d8a8;font-size:0.88rem;font-weight:600;text-decoration:none">← Back to Dashboard</a>
+    </div>
 
-    const medals    = ['🥇','🥈','🥉'];
-    const rankClass = ['gold','silver','bronze'];
+</div>
 
-    async function load(type, period, btn) {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      const res  = await fetch(`${API}/leaderboard?type=${type}&period=${period}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      document.getElementById('myRank').textContent =
-        data.myRank ? `You are ranked #${data.myRank} this ${period}` : 'Log a trip to appear on the board!';
-      document.getElementById('board').innerHTML = data.leaderboard.map((r, i) => `
-        <div class="row ${r.username === me ? 'me' : ''}">
-          <div class="rank ${rankClass[i] || ''}">${medals[i] || '#' + (i+1)}</div>
-          <div class="name">${r.username} ${r.username === me ? '(you)' : ''}</div>
-          <div class="streak">🔥${r.current_streak}d</div>
-          <div class="score">${parseFloat(r.score).toFixed(type==='points'?0:2)} ${type==='co2'?'kg':type==='distance'?'km':'pts'}</div>
-        </div>`).join('');
+<script>
+const API   = 'http://localhost:3000/api';
+const token = localStorage.getItem('token');
+const me    = localStorage.getItem('username');
+
+if (!token) window.location.href = 'login.html';
+
+function logout() { localStorage.removeItem('token'); localStorage.removeItem('username'); window.location.href = 'login.html'; }
+
+const medals = ['🥇','🥈','🥉'];
+const podiumClass = ['first','second','third'];
+const scoreClass  = ['gold','silver','bronze'];
+
+function fmt(val, type) {
+    const n = parseFloat(val);
+    if (type === 'points')   return Math.round(n).toLocaleString() + ' pts';
+    if (type === 'co2')      return n.toFixed(2) + ' kg';
+    if (type === 'distance') return n.toFixed(1) + ' km';
+    return n;
+}
+
+async function load(type, period, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    document.getElementById('boardWrap').innerHTML = '<div class="empty-state"><span class="empty-icon">⏳</span>Loading...</div>';
+
+    try {
+        const res  = await fetch(`${API}/leaderboard?type=${type}&period=${period}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        // My rank
+        const rankEl = document.getElementById('myRank');
+        if (data.myRank) {
+            rankEl.textContent = `You are ranked #${data.myRank} this ${period} 🎉`;
+        } else {
+            rankEl.textContent = 'Log a trip to appear on the board!';
+        }
+
+        const board = data.leaderboard || [];
+
+        if (!board.length) {
+            document.getElementById('boardWrap').innerHTML = `
+                <div class="empty-state">
+                    <span class="empty-icon">🌱</span>
+                    No data yet — log a trip to appear here!
+                </div>`;
+            return;
+        }
+
+        // Top 3 podium
+        const top3 = board.slice(0, 3);
+        const rest  = board.slice(3);
+
+        // Reorder podium: 2nd, 1st, 3rd for visual height effect
+        const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
+        const podiumClasses = top3[1] ? ['second','first','third'] : ['first','second','third'];
+
+        let podiumHTML = `<div class="podium">`;
+        podiumOrder.forEach((r, i) => {
+            const origIdx = top3.indexOf(r);
+            const isMe = r.username === me;
+            podiumHTML += `
+                <div class="podium-card ${podiumClasses[i]}">
+                    ${isMe ? '<div class="podium-you">you</div>' : ''}
+                    <span class="podium-medal">${medals[origIdx]}</span>
+                    <div class="podium-name">${r.username}</div>
+                    <div class="podium-score ${scoreClass[origIdx]}">${fmt(r.score, type)}</div>
+                    <div class="podium-streak">🔥 ${r.current_streak}d streak</div>
+                </div>`;
+        });
+        podiumHTML += `</div>`;
+
+        // Rest of board
+        let restHTML = '';
+        if (rest.length) {
+            restHTML = `<div class="board-rest">` + rest.map((r, i) => `
+                <div class="board-row ${r.username === me ? 'me' : ''}">
+                    <div class="row-rank">#${i + 4}</div>
+                    <div class="row-name ${r.username === me ? 'me-name' : ''}">${r.username}${r.username === me ? ' 👤' : ''}</div>
+                    <div class="row-streak">🔥${r.current_streak}d</div>
+                    <div class="row-score">${fmt(r.score, type)}</div>
+                </div>
+            `).join('') + `</div>`;
+        }
+
+        document.getElementById('boardWrap').innerHTML = podiumHTML + restHTML;
+
+    } catch (err) {
+        document.getElementById('boardWrap').innerHTML = `
+            <div class="empty-state">
+                <span class="empty-icon">⚠️</span>
+                Could not load leaderboard. Is the server running?
+            </div>`;
     }
+}
 
-    load('points','week', null);
-
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js'); });
-    }
-  </script>
-
+load('points', 'week', null);
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+</script>
 </body>
 </html>
