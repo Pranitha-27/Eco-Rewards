@@ -5,14 +5,15 @@ const path      = require('path');
 const helmet    = require('helmet');
 const morgan    = require('morgan');
 const rateLimit = require('express-rate-limit');
+const cron      = require('node-cron');
 
 const app = express();
 
 // ── SECURITY HEADERS ──
 app.use(helmet({
-  contentSecurityPolicy:         false, // our HTML uses inline scripts + CDN links
-  crossOriginEmbedderPolicy:     false, // allows Google Fonts and external CDNs
-  crossOriginResourcePolicy:     false, // allows loading assets cross-origin
+  contentSecurityPolicy:     false, // our HTML uses inline scripts + CDN links
+  crossOriginEmbedderPolicy: false, // allows Google Fonts and external CDNs
+  crossOriginResourcePolicy: false, // allows loading assets cross-origin
 }));
 
 // ── REQUEST LOGGING ──
@@ -28,10 +29,9 @@ app.use(cors({
 app.use(express.json({ limit: '10kb' }));
 
 // ── RATE LIMITING ──
-// Very generous limits so normal usage is never blocked
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500,                  // 500 requests per 15 min (plenty for dev)
+  windowMs: 15 * 60 * 1000,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },
@@ -39,7 +39,7 @@ const generalLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 50,                   // 50 login attempts per 15 min
+  max: 50,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many login attempts, please try again later.' },
@@ -54,6 +54,7 @@ app.get('/health', (req, res) => {
     status:    'ok',
     timestamp: new Date().toISOString(),
     uptime:    Math.round(process.uptime()) + 's',
+    env:       process.env.NODE_ENV || 'development',
   });
 });
 
@@ -87,11 +88,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ── AUTO-SEED DAILY CHALLENGES ──
+// ═══════════════════════════════════════════
+// ── SCHEDULED JOBS ──
+// ═══════════════════════════════════════════
+
+const db = require('./config/db');
+
+// ── SEED DAILY CHALLENGES ──
 async function seedDailyChallenges() {
   try {
-    const db = require('./config/db');
-
+    // Use MySQL CURDATE() so timezone always matches the database
     const [[{ today }]] = await db.query('SELECT CURDATE() AS today');
     const dateStr = today.toISOString().split('T')[0];
 
@@ -129,27 +135,114 @@ async function seedDailyChallenges() {
   }
 }
 
-// Check every hour
-setInterval(seedDailyChallenges, 60 * 60 * 1000);
+// ── REFRESH LEADERBOARD CACHE ──
+async function refreshLeaderboardCache() {
+  try {
+    const periods = ['week', 'month', 'all'];
+    const types   = ['points', 'co2', 'distance'];
 
+    for (const period of periods) {
+      for (const type of types) {
+
+        let dateFilter = '';
+        if (period === 'week')  dateFilter = 'AND a.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
+        if (period === 'month') dateFilter = 'AND a.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)';
+
+        const scoreCol =
+          type === 'points'   ? 'SUM(a.points_earned)' :
+          type === 'co2'      ? 'SUM(a.co2_saved)'     :
+                                'SUM(a.distance)';
+
+        const [rows] = await db.query(`
+          SELECT
+            u.username,
+            u.current_streak,
+            ${scoreCol} AS score
+          FROM Activities a
+          JOIN Users u ON u.id = a.user_id
+          WHERE 1=1 ${dateFilter}
+          GROUP BY a.user_id
+          ORDER BY score DESC
+          LIMIT 20
+        `);
+
+        await db.query(`
+          INSERT INTO LeaderboardCache (period, type, data, updated_at)
+          VALUES (?, ?, ?, NOW())
+          ON DUPLICATE KEY UPDATE data = VALUES(data), updated_at = NOW()
+        `, [period, type, JSON.stringify(rows)]);
+      }
+    }
+
+    console.log('✅ Leaderboard cache refreshed');
+  } catch (err) {
+    console.error('Leaderboard cache error:', err.message);
+  }
+}
+
+// ── CLEAN UP EXPIRED TOKENS ──
+async function cleanupExpiredTokens() {
+  try {
+    const [result] = await db.query(
+      'DELETE FROM RefreshTokens WHERE expires_at < NOW()'
+    );
+    if (result.affectedRows > 0) {
+      console.log(`🧹 Cleaned up ${result.affectedRows} expired refresh tokens`);
+    }
+  } catch (err) {
+    // Table may not exist yet — safe to ignore
+    if (err.code !== 'ER_NO_SUCH_TABLE') {
+      console.error('Token cleanup error:', err.message);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+// ── CRON SCHEDULE ──
+// ═══════════════════════════════════════════
+
+// Seed new challenges every day at midnight
+cron.schedule('0 0 * * *', () => {
+  console.log('🌙 Midnight cron — seeding daily challenges');
+  seedDailyChallenges();
+}, { timezone: 'Asia/Kolkata' });
+
+// Refresh leaderboard cache every 5 minutes
+cron.schedule('*/5 * * * *', () => {
+  refreshLeaderboardCache();
+});
+
+// Clean up expired tokens every Sunday at 2am
+cron.schedule('0 2 * * 0', () => {
+  console.log('🧹 Weekly cleanup — removing expired tokens');
+  cleanupExpiredTokens();
+}, { timezone: 'Asia/Kolkata' });
+
+// ═══════════════════════════════════════════
 // ── START SERVER ──
+// ═══════════════════════════════════════════
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   console.log(`✅ EcoRewards server running on http://localhost:${PORT}`);
+
+  // Run immediately on startup
   await seedDailyChallenges();
+  await refreshLeaderboardCache();
+  await cleanupExpiredTokens();
 });
 
 // ── GRACEFUL SHUTDOWN ──
 process.on('SIGTERM', () => {
-  console.log('Server shutting down gracefully...');
+  console.log('🛑 Server shutting down gracefully...');
   process.exit(0);
 });
 
 process.on('uncaughtException', (err) => {
-  console.error('Uncaught exception:', err.message);
+  console.error('💥 Uncaught exception:', err.message);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled rejection:', reason);
+  console.error('💥 Unhandled rejection:', reason);
 });
